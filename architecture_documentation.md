@@ -74,7 +74,7 @@ graph TB
 Muestra la estructura interna de módulos lógicos dentro de la aplicación FastAPI.
 
 ```mermaid
-graph DP
+graph TD
     classDef router fill:#1E293B,stroke:#3B82F6,color:#FFF;
     classDef service fill:#1E293B,stroke:#10B981,color:#FFF;
     classDef repo fill:#1E293B,stroke:#F59E0B,color:#FFF;
