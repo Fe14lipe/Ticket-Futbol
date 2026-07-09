@@ -1,0 +1,100 @@
+name: ticket_futbol
+
+services:
+  # Database layer: PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: ticket_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=ticket_futbol_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ticket_futbol_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Cache and messaging broker layer: Redis
+  redis:
+    image: redis:7-alpine
+    container_name: ticket_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Serverless functions app layer: Simulated AWS Lambdas (Payment & QR Generator)
+  lambda-runner:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.lambda
+    container_name: ticket_lambda_runner
+    ports:
+      - "8001:8001"
+    volumes:
+      - ../static:/app/static
+    depends_on:
+      - redis
+
+  # Core Backend API & Gateway application layer (FastAPI)
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    container_name: ticket_api_gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=ticket_futbol_db
+      - REDIS_HOST=redis
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - LAMBDA_SERVICE_URL=http://lambda-runner:8001
+    volumes:
+      - ../static:/app/static
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      lambda-runner:
+        condition: service_started
+
+  # Queue processing application layer: Celery Worker
+  celery-worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.celery
+    container_name: ticket_celery_worker
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=ticket_futbol_db
+      - REDIS_HOST=redis
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - LAMBDA_SERVICE_URL=http://lambda-runner:8001
+    volumes:
+      - ../static:/app/static
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      lambda-runner:
+        condition: service_started
+
+volumes:
+  postgres_data:

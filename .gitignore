@@ -1,0 +1,28 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local environment configs
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Database data folders
+postgres_data/
+
+# SQLite databases
+*.db
+*.sqlite3
+
+# Generated QR Codes
+static/qrcodes/*.png
+
+# IDE and system files
+.vscode/
+.idea/
+.gemini/
+.DS_Store
+Thumbs.db

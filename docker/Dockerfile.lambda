@@ -1,0 +1,20 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Install system dependencies for qrcode Pillow compilation
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libjpeg-dev \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 8001
+
+# Start the AWS Lambda simulation runner
+CMD ["uvicorn", "lambda_service.lambda_runner:app", "--host", "0.0.0.0", "--port", "8001"]

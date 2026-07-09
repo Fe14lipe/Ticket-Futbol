@@ -1,0 +1,1702 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Futbol - Ecosistema Transaccional de Boletería</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- html5-qrcode library for real-time mobile camera scanner -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+</head>
+<body>
+
+    <!-- Header Section -->
+    <header id="app-header" style="display: none;">
+        <div class="logo-container">
+            <span style="font-size: 28px;">⚽</span>
+            <h1 class="logo-text">TICKET FÚTBOL</h1>
+        </div>
+        <div class="nav-user">
+            <span id="user-display" style="font-weight: 600; color: #E2E8F0;">Usuario</span>
+            <div id="role-badge-container" style="display: inline-block; margin: 0 10px;">
+                <span id="role-badge" class="role-badge">Cliente</span>
+            </div>
+            <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+        </div>
+    </header>
+
+    <!-- Loader Overlay -->
+    <div id="app-loader" class="loader-wrapper" style="display: none;">
+        <div class="loader"></div>
+        <h3 style="color: #94A3B8; font-weight: 500;" id="loader-text">Procesando solicitud...</h3>
+    </div>
+
+    <!-- Main Container -->
+    <main>
+        
+        <!-- AUTH CARD: Show when not logged in -->
+        <div id="auth-section" class="auth-overlay">
+            <div class="glass-card" style="max-width: 420px; width: 100%;">
+                <h2 style="font-family: 'Outfit', sans-serif; font-size: 28px; margin: 0 0 8px 0; text-align: center;">Bienvenido</h2>
+                <p style="color: var(--text-muted); text-align: center; margin: 0 0 24px 0; font-size: 14px;">Ingresa para comprar tus boletos o administrar eventos.</p>
+                
+                <!-- Toggle Register/Login -->
+                <div style="display: flex; background: rgba(15,23,42,0.5); border-radius: 10px; padding: 4px; margin-bottom: 24px;">
+                    <button id="toggle-login" class="btn-primary" style="background: var(--primary); padding: 8px; font-size: 13px;" onclick="switchAuthTab('login')">Iniciar Sesión</button>
+                    <button id="toggle-register" class="btn-primary" style="background: transparent; color: var(--text-muted); padding: 8px; font-size: 13px;" onclick="switchAuthTab('register')">Registrarse</button>
+                </div>
+
+                <!-- Login Form -->
+                <form id="login-form" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="login-email">Usuario / Correo</label>
+                        <input type="text" id="login-email" class="form-control" placeholder="admin" required value="admin">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Contraseña</label>
+                        <input type="password" id="login-password" class="form-control" placeholder="••••••••" required value="admin123">
+                    </div>
+                    <button type="submit" class="btn-primary" style="margin-top: 10px;">Ingresar</button>
+                </form>
+
+                <!-- Register Form -->
+                <form id="register-form" onsubmit="handleRegister(event)" style="display: none;">
+                    <div class="form-group">
+                        <label for="reg-name">Nombre Completo</label>
+                        <input type="text" id="reg-name" class="form-control" placeholder="Juan Pérez" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-email">Correo Electrónico</label>
+                        <input type="email" id="reg-email" class="form-control" placeholder="juan@correo.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password">Contraseña</label>
+                        <input type="password" id="reg-password" class="form-control" placeholder="Mínimo 6 caracteres" required>
+                    </div>
+
+                    <button type="submit" class="btn-primary" style="margin-top: 10px;">Crear Cuenta</button>
+                </form>
+                
+                <!-- Credenciales de prueba eliminadas -->
+            </div>
+        </div>
+
+        <!-- PORTAL CONTENT: Show when logged in -->
+        <div id="portal-section" style="display: none;">
+            
+            <!-- Tabs Menu -->
+            <nav class="tabs-nav">
+                <button id="tab-buy-btn" class="tab-btn active" onclick="switchPortalTab('buy')">🎟️ Comprar Boletos</button>
+                <button id="tab-my-tickets-btn" class="tab-btn" onclick="switchPortalTab('my-tickets')">🎫 Mis Boletos</button>
+                <button id="tab-admin-btn" class="tab-btn" onclick="switchPortalTab('admin')" style="display: none;">⚙️ Panel Administrativo</button>
+                <button id="tab-scan-btn" class="tab-btn" onclick="switchPortalTab('scan')" style="display: none;">🔍 Validar Entradas</button>
+            </nav>
+
+            <!-- TAB 1: BUY TICKETS -->
+            <section id="tab-buy" class="tab-content active">
+                <!-- Client view: soccer seating and matches list -->
+                <div id="client-events-view" style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 32px; align-items: start;">
+                    
+                    <!-- Events List -->
+                    <div>
+                        <h2 style="font-family: 'Outfit', sans-serif; font-size: 24px; margin: 0 0 20px 0;">⚽ Próximos Eventos (Mundial 2026)</h2>
+                        <div id="events-list-container" class="event-grid" style="grid-template-columns: 1fr;">
+                            <!-- Event cards rendered via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Seating Map selection -->
+                    <div id="seating-selection-card" class="glass-card" style="display: none;">
+                        <h3 id="selected-event-title" style="font-family: 'Outfit', sans-serif; font-size: 22px; margin: 0 0 4px 0;">Selecciona tus asientos</h3>
+                        <p id="selected-event-details" style="color: var(--text-muted); font-size: 13px; margin: 0 0 24px 0;">Estadio Metropolitano</p>
+                        
+                        <div class="seat-map-container">
+                            <div class="stadium-screen"></div>
+                            <div style="text-align: center; font-size: 11px; color: var(--text-muted); margin-bottom: 12px; font-weight: 600; letter-spacing: 1px;">ESCENARIO / CANCHA</div>
+                            <div id="seats-grid" class="seats-grid">
+                                <!-- Seats rendered dynamically -->
+                            </div>
+                            
+                            <div class="legend-container">
+                                <div class="legend-item"><div class="legend-color" style="background: #DC2626;"></div><span>General (Libre)</span></div>
+                                <div class="legend-item"><div class="legend-color" style="background: #475569;"></div><span>VIP (Libre)</span></div>
+                                <div class="legend-item"><div class="legend-color" style="background: #6366F1;"></div><span>Tu Selección</span></div>
+                                <div class="legend-item"><div class="legend-color" style="background: #F59E0B;"></div><span>Reservando</span></div>
+                                <div class="legend-item"><div class="legend-color" style="background: #1E293B; border: 1px solid rgba(255,255,255,0.15);"></div><span>Vendido</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Subtotal and checkout -->
+                        <div style="margin-top: 32px; border-top: 1px solid var(--card-border); padding-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span style="font-size: 13px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Asientos seleccionados:</span>
+                                <div id="selected-seats-display" style="font-size: 18px; font-weight: 700; color: var(--secondary); margin-top: 4px;">Ninguno</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="font-size: 13px; color: var(--text-muted); font-weight: 600;">TOTAL DE COMPRA:</span>
+                                <div id="subtotal-display" style="font-size: 24px; font-weight: 800; color: var(--text-light); margin-top: 4px;">$0.00</div>
+                            </div>
+                        </div>
+
+                        <button id="book-seats-btn" class="btn-primary" style="margin-top: 24px;" onclick="initiateCheckout()" disabled>
+                            Bloquear Asientos y Continuar
+                        </button>
+                        <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px; text-align: center;">
+                            ⚠️ Al continuar, los asientos se bloquearán en Redis por 5 minutos para evitar doble-venta.
+                        </p>
+                    </div>
+
+                    <!-- Welcome selection guide -->
+                    <div id="seating-placeholder" class="glass-card" style="text-align: center; padding: 60px 40px; color: var(--text-muted);">
+                        <span style="font-size: 48px; display: block; margin-bottom: 16px;">🎟️</span>
+                        <h3>Selecciona un partido</h3>
+                        <p style="font-size: 14px; max-width: 300px; margin: 0 auto;">Elige uno de los partidos de la lista para cargar el mapa de asientos del estadio y comprar tus boletos en tiempo real.</p>
+                    </div>
+                </div>
+
+                <!-- Admin view: events management grid -->
+                <div id="admin-events-view" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 style="font-family: 'Outfit', sans-serif; font-size: 24px; margin: 0;">Historial de Eventos</h2>
+                        <button class="logout-btn" onclick="loadAdminEventsList()" style="background: rgba(99,102,241,0.1); color: var(--primary); border-color: rgba(99,102,241,0.3); font-weight: bold;">🔄 Recargar Historial</button>
+                    </div>
+                    <div id="admin-events-table-container" class="glass-card" style="padding: 20px; overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--card-border); color: var(--text-light); font-size: 14px; font-weight: 600;">
+                                    <th style="padding: 12px 8px;">Partido</th>
+                                    <th style="padding: 12px 8px;">Estadio</th>
+                                    <th style="padding: 12px 8px;">Fecha</th>
+                                    <th style="padding: 12px 8px;">Precio</th>
+                                    <th style="padding: 12px 8px;">Capacidad</th>
+                                    <th style="padding: 12px 8px;">Visibilidad</th>
+                                    <th style="padding: 12px 8px; text-align: center;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-events-tbody" style="font-size: 13px; color: var(--text-muted);">
+                                <!-- Admin event rows rendered dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: ADMIN PANEL -->
+            <section id="tab-admin" class="tab-content">
+                
+                <!-- Metrics -->
+                <div id="admin-metrics" class="metrics-grid">
+                    <div class="metric-card">
+                        <span class="meta-label">Partidos Registrados</span>
+                        <div id="metric-events" class="metric-val">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <span class="meta-label">Boletos Vendidos</span>
+                        <div id="metric-sold" class="metric-val">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <span class="meta-label">Ingresos Totales</span>
+                        <div id="metric-revenue" class="metric-val" style="color: var(--secondary);">$0.00</div>
+                    </div>
+                    <div class="metric-card">
+                        <span class="meta-label">Boletos Validados</span>
+                        <div id="metric-validated" class="metric-val" style="color: var(--primary);">0</div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 32px; align-items: start;">
+                    <!-- Create event form -->
+                    <div class="glass-card">
+                        <h3 style="font-family: 'Outfit', sans-serif; font-size: 22px; margin: 0 0 20px 0;">Crear Nuevo Evento Deportivo</h3>
+                        <form onsubmit="handleCreateEvent(event)">
+                            <div class="form-group">
+                                <label for="evt-title">Título del Partido</label>
+                                <input type="text" id="evt-title" class="form-control" placeholder="Barcelona vs Real Madrid" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="evt-desc">Descripción</label>
+                                <input type="text" id="evt-desc" class="form-control" placeholder="Gran Clásico de Pretemporada">
+                            </div>
+                            <div class="form-group">
+                                <label for="evt-date">Fecha y Hora</label>
+                                <input type="datetime-local" id="evt-date" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="evt-loc">Lugar / Estadio</label>
+                                <input type="text" id="evt-loc" class="form-control" placeholder="Estadio Metropolitano" required>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div class="form-group">
+                                    <label for="evt-price">Precio del Boleto ($)</label>
+                                    <input type="number" step="0.01" id="evt-price" class="form-control" placeholder="45.00" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="evt-seats">Capacidad (Asientos)</label>
+                                    <input type="number" id="evt-seats" class="form-control" placeholder="50" min="10" max="150" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary" style="margin-top: 10px;">Crear Evento y Generar Asientos</button>
+                        </form>
+                    </div>
+
+                    <!-- Inventory layout breakdown -->
+                    <div class="glass-card">
+                        <h3 style="font-family: 'Outfit', sans-serif; font-size: 22px; margin: 0 0 20px 0;">Distribución del Inventario Global</h3>
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <div>
+                                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
+                                    <span style="color: var(--text-muted);">Asientos Libres</span>
+                                    <span id="inv-free-text" style="font-weight: 700;">0 / 0</span>
+                                </div>
+                                <div style="width: 100%; height: 10px; background: #1E293B; border-radius: 5px; overflow: hidden;">
+                                    <div id="inv-free-bar" style="height: 100%; background: var(--secondary); width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
+                                    <span style="color: var(--text-muted);">Asientos Reservando (En Cola)</span>
+                                    <span id="inv-lock-text" style="font-weight: 700;">0 / 0</span>
+                                </div>
+                                <div style="width: 100%; height: 10px; background: #1E293B; border-radius: 5px; overflow: hidden;">
+                                    <div id="inv-lock-bar" style="height: 100%; background: var(--warning); width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
+                                    <span style="color: var(--text-muted);">Asientos Vendidos (Booked)</span>
+                                    <span id="inv-book-text" style="font-weight: 700;">0 / 0</span>
+                                </div>
+                                <div style="width: 100%; height: 10px; background: #1E293B; border-radius: 5px; overflow: hidden;">
+                                    <div id="inv-book-bar" style="height: 100%; background: var(--danger); width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- TAB 3: VALIDATION SCANNER -->
+            <section id="tab-scan" class="tab-content">
+                <div class="glass-card" style="max-width: 600px; margin: 0 auto; text-align: center;">
+                    <span style="font-size: 54px; display: block; margin-bottom: 16px;">🔍</span>
+                    <h2 style="font-family: 'Outfit', sans-serif; font-size: 26px; margin: 0 0 8px 0;">Control de Acceso al Estadio</h2>
+                    <p style="color: var(--text-muted); margin: 0 0 32px 0;">Simulador de escaneo de boletos electrónicos mediante cámara o UUID.</p>
+                    
+                    <div style="background: rgba(15,23,42,0.5); border-radius: 16px; padding: 24px; border: 1px solid var(--card-border); margin-bottom: 20px;">
+                        
+                        <!-- CAMERA SCANNER CONTAINER -->
+                        <h4 style="font-family: 'Outfit', sans-serif; font-size: 14px; margin: 0 0 16px 0; color: var(--secondary); text-transform: uppercase; letter-spacing: 1px;">📷 Escaneo con Cámara Móvil</h4>
+                        <div id="qr-reader" style="width: 100%; max-width: 380px; margin: 0 auto 20px auto; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2);"></div>
+                        
+                        <div style="display: flex; gap: 12px; justify-content: center; margin-bottom: 24px; flex-wrap: wrap;">
+                            <button id="start-cam-btn" class="btn-primary" style="width: auto; padding: 8px 20px; font-size: 13px;" onclick="startCameraScanner()">
+                                Iniciar Cámara
+                            </button>
+                            <button id="stop-cam-btn" class="btn-primary" style="width: auto; padding: 8px 20px; font-size: 13px; background: rgba(239,68,68,0.15); color: #EF4444; border: 1px solid rgba(239,68,68,0.3);" onclick="stopCameraScanner()" disabled>
+                                Detener Cámara
+                            </button>
+                        </div>
+                        
+                        <!-- OR SEPARATOR -->
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 24px;">
+                            <div style="flex-grow: 1; height: 1px; background: var(--card-border);"></div>
+                            <span style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">o escribe el código</span>
+                            <div style="flex-grow: 1; height: 1px; background: var(--card-border);"></div>
+                        </div>
+
+                        <div class="form-group" style="text-align: left;">
+                            <label for="scan-uuid-input">Ingresa el UUID del Boleto Escaneado</label>
+                            <input type="text" id="scan-uuid-input" class="form-control" placeholder="Ej: 9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d">
+                        </div>
+                        <button class="btn-primary" onclick="simulateTicketScan()">
+                            Validar Boleto Manualmente
+                        </button>
+                    </div>
+
+                    <div id="scanner-feedback" class="scan-feedback">
+                        <!-- Success/Error alert shows here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: MY TICKETS -->
+            <section id="tab-my-tickets" class="tab-content">
+                <div class="glass-card" style="max-width: 800px; margin: 0 auto; padding: 32px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid var(--card-border); padding-bottom: 16px;">
+                        <h2 style="font-family: 'Outfit', sans-serif; font-size: 26px; margin: 0;">🎫 Mis Boletos Adquiridos</h2>
+                        <button class="logout-btn" onclick="loadMyTickets()" style="background: rgba(99,102,241,0.1); color: var(--primary); border-color: rgba(99,102,241,0.3); font-weight: bold;">🔄 Actualizar Listado</button>
+                    </div>
+                    <p style="color: var(--text-muted); margin: 0 0 32px 0;">Aquí tienes el listado de tus boletos de fútbol activos y los códigos QR generados de forma asíncrona para ingresar al estadio.</p>
+                    <div id="my-tickets-container" style="display: flex; flex-direction: column; gap: 20px;">
+                        <!-- My tickets list here -->
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+    </main>
+
+    <!-- CHECKOUT MODAL -->
+    <div id="checkout-modal" class="modal-overlay" style="display: none;">
+        <div class="glass-card modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 16px; margin-bottom: 24px;">
+                <h3 style="font-family: 'Outfit', sans-serif; font-size: 20px; margin: 0;">Pasarela de Pago Segura</h3>
+                <button style="background: transparent; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer;" onclick="closeCheckoutModal()">×</button>
+            </div>
+            
+            <div style="margin-bottom: 20px; background: rgba(99, 102, 241, 0.08); border-radius: 12px; padding: 16px; border: 1px solid rgba(99, 102, 241, 0.2);">
+                <div style="font-size: 13px; color: var(--text-muted);">Monto a pagar:</div>
+                <div id="modal-amount-display" style="font-size: 28px; font-weight: 800; color: #FFF; margin-top: 4px;">$0.00</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+                    Order ID: <span id="modal-order-id" style="font-family: monospace;">N/A</span>
+                </div>
+            </div>
+
+            <form onsubmit="handlePaymentSubmit(event)">
+                <div class="form-group">
+                    <label for="card-num">Número de Tarjeta</label>
+                    <input type="text" id="card-num" class="form-control" placeholder="4000 1234 5678 9010" required maxlength="19">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label for="card-month">Mes Exp</label>
+                        <input type="number" id="card-month" class="form-control" placeholder="12" min="1" max="12" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="card-year">Año Exp</label>
+                        <input type="number" id="card-year" class="form-control" placeholder="2028" min="2026" max="2040" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="card-cvc">CVC</label>
+                        <input type="text" id="card-cvc" class="form-control" placeholder="123" required maxlength="4">
+                    </div>
+                </div>
+
+                <div style="margin-top: 10px; font-size: 11px; color: var(--text-muted); margin-bottom: 20px;">
+                    💡 <em>Tip de prueba:</em> Tarjetas que inicien con <strong>4111</strong> serán declinadas por el procesador Lambda. CVC <strong>999</strong> fallará por código de seguridad. Cualquier otra simulará éxito.
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    Pagar Boleto Deportivos
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- PURCHASE SUMMARY MODAL -->
+    <div id="summary-modal" class="modal-overlay" style="display: none;">
+        <div class="glass-card modal-content" style="text-align: center; padding: 40px 32px;">
+            <span style="font-size: 54px; display: block; margin-bottom: 16px;">🎉</span>
+            <h3 style="font-family: 'Outfit', sans-serif; font-size: 24px; margin: 0 0 8px 0; color: var(--secondary);">¡Pago Completado!</h3>
+            <p style="color: var(--text-muted); font-size: 14px; margin: 0 0 24px 0;">Tu pago fue procesado con éxito por el servicio Lambda y tu entrada fue generada.</p>
+            
+            <div id="tickets-links-container" style="background: rgba(15,23,42,0.6); border-radius: 16px; padding: 20px; margin-bottom: 24px; text-align: left; max-height: 180px; overflow-y: auto;">
+                <!-- Links rendered here -->
+            </div>
+
+            <button class="btn-primary" onclick="closeSummaryModal()">
+                Entendido
+            </button>
+        </div>
+    </div>
+
+    <!-- EDIT EVENT MODAL -->
+    <div id="edit-event-modal" class="modal-overlay" style="display: none;">
+        <div class="glass-card modal-content" style="max-width: 500px; width: 90%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 16px; margin-bottom: 24px;">
+                <h3 style="font-family: 'Outfit', sans-serif; font-size: 20px; margin: 0; color: var(--text-light);">Editar Evento Deportivo</h3>
+                <button style="background: transparent; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer;" onclick="closeEditEventModal()">×</button>
+            </div>
+            
+            <form onsubmit="handleEditEventSubmit(event)">
+                <input type="hidden" id="edit-evt-id">
+                <div class="form-group">
+                    <label for="edit-evt-title">Título del Partido</label>
+                    <input type="text" id="edit-evt-title" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-evt-desc">Descripción</label>
+                    <input type="text" id="edit-evt-desc" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="edit-evt-date">Fecha y Hora</label>
+                    <input type="datetime-local" id="edit-evt-date" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-evt-loc">Lugar / Estadio</label>
+                    <input type="text" id="edit-evt-loc" class="form-control" required>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label for="edit-evt-price">Precio del Boleto ($)</label>
+                        <input type="number" step="0.01" id="edit-evt-price" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-evt-status">Visibilidad</label>
+                        <select id="edit-evt-status" class="form-control">
+                            <option value="visible">Visible</option>
+                            <option value="hidden">Oculto</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary" style="margin-top: 20px;">
+                    Guardar Cambios
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- CLIENT SCRIPTS -->
+    <script>
+        const API_URL = ""; // Relative URL maps directly to Uvicorn gateway
+        let authToken = localStorage.getItem("token") || "";
+        let userRole = localStorage.getItem("role") || "";
+        let userEmail = localStorage.getItem("email") || "";
+        let userFullName = localStorage.getItem("fullName") || "";
+        let currentUserId = 1; // Simplified local simulation tracking
+        
+        let selectedEventId = null;
+        let selectedSeats = [];
+        let currentOrder = null;
+        
+        // App Load
+        window.addEventListener("DOMContentLoaded", () => {
+            if (authToken) {
+                showPortal();
+            } else {
+                showAuth();
+            }
+            loadEvents();
+        });
+
+        function showAuth() {
+            document.getElementById("auth-section").style.display = "flex";
+            document.getElementById("app-header").style.display = "none";
+            document.getElementById("portal-section").style.display = "none";
+        }
+
+        let simulatedRole = "";
+
+        function showPortal() {
+            document.getElementById("auth-section").style.display = "none";
+            document.getElementById("app-header").style.display = "flex";
+            document.getElementById("portal-section").style.display = "block";
+            
+            document.getElementById("user-display").innerText = userFullName || userEmail;
+            
+            simulatedRole = userRole;
+            updateRoleBadgeAndTabs();
+        }
+
+        function updateRoleBadgeAndTabs() {
+            const container = document.getElementById("role-badge-container");
+            
+            if (userRole === "admin") {
+                container.innerHTML = `
+                    <select id="role-selector" class="role-badge" style="background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.4); color: #818CF8; padding: 4px 12px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 11px; text-transform: uppercase;" onchange="changeAdminSimulatedRole(this.value)">
+                        <option value="admin" ${simulatedRole === "admin" ? "selected" : ""} style="background: #0f172a; color: #818CF8;">ORGANIZADOR ▾</option>
+                        <option value="staff" ${simulatedRole === "staff" ? "selected" : ""} style="background: #0f172a; color: #F59E0B;">STAFF ▾</option>
+                    </select>
+                `;
+            } else {
+                const badgeText = userRole === "staff" ? "Personal Acceso" : "Cliente";
+                const badgeColor = userRole === "staff" ? "#F59E0B" : "#10B981";
+                container.innerHTML = `
+                    <span class="role-badge" style="border-color: ${badgeColor}4D; color: ${badgeColor}; background: ${badgeColor}1A; padding: 4px 10px; border-radius: 10px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                        ${badgeText}
+                    </span>
+                `;
+            }
+
+            // Toggle admin and staff scan tab rights based on simulatedRole
+            const tabBuyBtn = document.getElementById("tab-buy-btn");
+            const clientEventsView = document.getElementById("client-events-view");
+            const adminEventsView = document.getElementById("admin-events-view");
+
+            if (simulatedRole === "admin") {
+                document.getElementById("tab-admin-btn").style.display = "block";
+                document.getElementById("tab-scan-btn").style.display = "block";
+                loadDashboardData();
+                
+                // Show admin event manager list and rename tab
+                if (tabBuyBtn) tabBuyBtn.innerHTML = "📅 Historial de Eventos";
+                if (clientEventsView) clientEventsView.style.display = "none";
+                if (adminEventsView) adminEventsView.style.display = "block";
+                loadAdminEventsList();
+            } else if (simulatedRole === "staff") {
+                document.getElementById("tab-scan-btn").style.display = "block";
+                document.getElementById("tab-admin-btn").style.display = "none";
+                
+                // Show client booking grid and rename tab
+                if (tabBuyBtn) tabBuyBtn.innerHTML = "🎟️ Comprar Boletos";
+                if (clientEventsView) clientEventsView.style.display = "grid";
+                if (adminEventsView) adminEventsView.style.display = "none";
+            } else {
+                document.getElementById("tab-admin-btn").style.display = "none";
+                document.getElementById("tab-scan-btn").style.display = "none";
+                
+                // Show client booking grid and rename tab
+                if (tabBuyBtn) tabBuyBtn.innerHTML = "🎟️ Comprar Boletos";
+                if (clientEventsView) clientEventsView.style.display = "grid";
+                if (adminEventsView) adminEventsView.style.display = "none";
+            }
+        }
+
+        function changeAdminSimulatedRole(newRole) {
+            simulatedRole = newRole;
+            updateRoleBadgeAndTabs();
+            
+            // Re-render tickets immediately with the new role styles if looking at tickets tab
+            const activeTabContent = document.querySelector(".tab-content.active");
+            if (activeTabContent && activeTabContent.id === "tab-my-tickets") {
+                loadMyTickets(true);
+            }
+            
+            // Re-render buy/events tab based on role swap
+            if (activeTabContent && activeTabContent.id === "tab-buy") {
+                if (newRole === "admin") {
+                    loadAdminEventsList();
+                } else {
+                    loadEvents();
+                }
+            }
+            
+            // Redirect admin to buy or scan tab if active tab content gets hidden
+            if (activeTabContent && activeTabContent.id === "tab-admin" && newRole === "staff") {
+                switchPortalTab('scan');
+            }
+        }
+
+        function switchAuthTab(type) {
+            if (type === 'login') {
+                document.getElementById("login-form").style.display = "block";
+                document.getElementById("register-form").style.display = "none";
+                document.getElementById("toggle-login").style.background = "var(--primary)";
+                document.getElementById("toggle-login").style.color = "white";
+                document.getElementById("toggle-register").style.background = "transparent";
+                document.getElementById("toggle-register").style.color = "var(--text-muted)";
+            } else {
+                document.getElementById("login-form").style.display = "none";
+                document.getElementById("register-form").style.display = "block";
+                document.getElementById("toggle-login").style.background = "transparent";
+                document.getElementById("toggle-login").style.color = "var(--text-muted)";
+                document.getElementById("toggle-register").style.background = "var(--primary)";
+                document.getElementById("toggle-register").style.color = "white";
+            }
+        }
+
+        function switchPortalTab(tabName) {
+            const tabs = ["buy", "admin", "scan", "my-tickets"];
+            tabs.forEach(t => {
+                const content = document.getElementById(`tab-${t}`);
+                const btn = document.getElementById(`tab-${t}-btn`);
+                if (content && btn) {
+                    if (t === tabName) {
+                        content.classList.add("active");
+                        btn.classList.add("active");
+                    } else {
+                        content.classList.remove("active");
+                        btn.classList.remove("active");
+                    }
+                }
+            });
+            
+            // Turn off camera scanner when switching away from validator tab
+            if (tabName !== 'scan') {
+                stopCameraScanner();
+            }
+            
+            if (tabName === 'admin') {
+                loadDashboardData();
+            } else if (tabName === 'my-tickets') {
+                loadMyTickets();
+            } else if (tabName === 'buy') {
+                if (simulatedRole === 'admin') {
+                    loadAdminEventsList();
+                } else {
+                    loadEvents();
+                }
+            }
+        }
+
+        // Loader Toggle
+        function toggleLoader(show, text = "Procesando...") {
+            const loader = document.getElementById("app-loader");
+            const loaderText = document.getElementById("loader-text");
+            loaderText.innerText = text;
+            loader.style.display = show ? "flex" : "none";
+        }
+
+        // AUTH FETCH REQUESTS
+        async function handleLogin(e) {
+            e.preventDefault();
+            toggleLoader(true, "Iniciando sesión...");
+            
+            const email = document.getElementById("login-email").value;
+            const password = document.getElementById("login-password").value;
+            
+            const formData = new URLSearchParams();
+            formData.append("username", email);
+            formData.append("password", password);
+
+            try {
+                const response = await fetch("/token", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    userRole = data.role;
+                    userEmail = data.email || email;
+                    userFullName = data.full_name || "";
+                    
+                    localStorage.setItem("token", authToken);
+                    localStorage.setItem("role", userRole);
+                    localStorage.setItem("email", userEmail);
+                    localStorage.setItem("fullName", userFullName);
+                    
+                    showPortal();
+                    loadEvents();
+                } else {
+                    const err = await response.json();
+                    alert("Error de ingreso: " + (err.detail || response.statusText));
+                }
+            } catch (err) {
+                alert("Error de conexión con el Gateway.");
+                console.error(err);
+            } finally {
+                toggleLoader(false);
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            toggleLoader(true, "Registrando usuario...");
+            
+            const name = document.getElementById("reg-name").value;
+            const email = document.getElementById("reg-email").value;
+            const password = document.getElementById("reg-password").value;
+            const role = "client";
+
+            try {
+                const response = await fetch("/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password, full_name: name, role })
+                });
+                
+                if (response.ok) {
+                    alert("Registro exitoso. ¡Inicia sesión con tus credenciales!");
+                    switchAuthTab('login');
+                    document.getElementById("login-email").value = email;
+                    document.getElementById("login-password").value = password;
+                } else {
+                    const err = await response.json();
+                    alert("Error en registro: " + (err.detail || response.statusText));
+                }
+            } catch (err) {
+                alert("Error de conexión al servidor.");
+            } finally {
+                toggleLoader(false);
+            }
+        }
+
+        function logout() {
+            localStorage.clear();
+            authToken = "";
+            userRole = "";
+            userEmail = "";
+            userFullName = "";
+            showAuth();
+        }
+
+        // LOAD EVENTS LIST
+        async function loadEvents() {
+            try {
+                const response = await fetch("/events/");
+                if (response.ok) {
+                    const events = await response.json();
+                    renderEvents(events);
+                }
+            } catch (err) {
+                console.error("Error fetching events:", err);
+            }
+        }
+
+        function renderEvents(events) {
+            const container = document.getElementById("events-list-container");
+            container.innerHTML = "";
+            
+            if (events.length === 0) {
+                container.innerHTML = `<p style="color: var(--text-muted); text-align: center;">No hay partidos programados.</p>`;
+                return;
+            }
+
+            events.forEach(evt => {
+                const card = document.createElement("div");
+                card.className = "glass-card event-card";
+                card.style.cursor = "pointer";
+                card.onclick = () => selectEvent(evt);
+                
+                const date = new Date(evt.date);
+                const formattedDate = date.toLocaleDateString('es-ES', { 
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                });
+
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                        <span style="font-size: 11px; background: rgba(99,102,241,0.1); color: var(--primary); padding: 4px 10px; border-radius: 12px; font-weight: 700; border: 1px solid rgba(99,102,241,0.2);">FÚTBOL</span>
+                        <span style="font-size: 16px; font-weight: 800; color: var(--secondary);">$${evt.ticket_price.toFixed(2)}</span>
+                    </div>
+                    <h3 class="event-title">${evt.title}</h3>
+                    <p class="event-info">📍 ${evt.location}</p>
+                    <p class="event-info">📅 ${formattedDate}</p>
+                    <p class="event-info" style="margin-top: 10px; color: var(--text-light); font-weight: 600;">Asientos totales: ${evt.total_seats}</p>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // SEAT MAPPING LOGIC
+        async function selectEvent(event) {
+            selectedEventId = event.id;
+            selectedSeats = [];
+            
+            document.getElementById("seating-placeholder").style.display = "none";
+            const selectionCard = document.getElementById("seating-selection-card");
+            selectionCard.style.display = "block";
+            
+            document.getElementById("selected-event-title").innerText = event.title;
+            document.getElementById("selected-event-details").innerText = `Lugar: ${event.location} | Capacidad: ${event.total_seats} asientos`;
+            
+            document.getElementById("selected-seats-display").innerText = "Ninguno";
+            document.getElementById("subtotal-display").innerText = "$0.00";
+            document.getElementById("book-seats-btn").disabled = true;
+
+            await loadSeatsMap(event.id, event.ticket_price);
+        }
+
+        async function loadSeatsMap(eventId, price) {
+            const grid = document.getElementById("seats-grid");
+            grid.innerHTML = "";
+            grid.className = ""; // clear old grid class to allow responsive SVG layout
+            
+            // Hide the old stage banner since the SVG draws its own pitch in the center
+            const screen = document.querySelector(".stadium-screen");
+            if (screen) screen.style.display = "none";
+            if (screen && screen.nextElementSibling) {
+                screen.nextElementSibling.style.display = "none";
+            }
+            
+            try {
+                const response = await fetch(`/events/${eventId}/seats`);
+                if (response.ok) {
+                    const seats = await response.json();
+                    
+                    // Group seats into solid concentric elliptical sectors (wedges) like a real stadium
+                    let rings = [];
+                    const N = seats.length;
+                    
+                    if (N <= 30) {
+                        rings = [{ seats: seats, a_in: 120, a_out: 145, b_in: 90, b_out: 115 }];
+                    } else if (N <= 60) {
+                        const seatsPerRing = Math.ceil(N / 3);
+                        for (let r = 0; r < 3; r++) {
+                            const start = r * seatsPerRing;
+                            const end = Math.min(start + seatsPerRing, N);
+                            rings.push({
+                                seats: seats.slice(start, end),
+                                a_in: 120 + r * 35,
+                                a_out: 145 + r * 35,
+                                b_in: 90 + r * 30,
+                                b_out: 115 + r * 30
+                            });
+                        }
+                    } else {
+                        const seatsPerRing = Math.ceil(N / 5);
+                        for (let r = 0; r < 5; r++) {
+                            const start = r * seatsPerRing;
+                            const end = Math.min(start + seatsPerRing, N);
+                            rings.push({
+                                seats: seats.slice(start, end),
+                                a_in: 120 + r * 32,
+                                a_out: 142 + r * 32,
+                                b_in: 90 + r * 26,
+                                b_out: 112 + r * 26
+                            });
+                        }
+                    }
+                    
+                    // Create SVG stadium
+                    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                    svg.setAttribute("viewBox", "0 0 800 600");
+                    svg.setAttribute("width", "100%");
+                    svg.setAttribute("height", "100%");
+                    svg.style.maxHeight = "500px";
+                    svg.style.background = "transparent";
+                    
+                    // Green football field (cancha) in the center
+                    const pitch = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                    pitch.setAttribute("x", "320");
+                    pitch.setAttribute("y", "240");
+                    pitch.setAttribute("width", "160");
+                    pitch.setAttribute("height", "120");
+                    pitch.setAttribute("rx", "8");
+                    pitch.setAttribute("fill", "#10B981"); // Beautiful emerald green
+                    pitch.setAttribute("stroke", "rgba(255,255,255,0.7)");
+                    pitch.setAttribute("stroke-width", "3");
+                    svg.appendChild(pitch);
+                    
+                    // Center line
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute("x1", "400");
+                    line.setAttribute("y1", "240");
+                    line.setAttribute("x2", "400");
+                    line.setAttribute("y2", "360");
+                    line.setAttribute("stroke", "rgba(255,255,255,0.7)");
+                    line.setAttribute("stroke-width", "3");
+                    svg.appendChild(line);
+                    
+                    // Center circle
+                    const centerCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    centerCircle.setAttribute("cx", "400");
+                    centerCircle.setAttribute("cy", "300");
+                    centerCircle.setAttribute("r", "25");
+                    centerCircle.setAttribute("fill", "none");
+                    centerCircle.setAttribute("stroke", "rgba(255,255,255,0.7)");
+                    centerCircle.setAttribute("stroke-width", "3");
+                    svg.appendChild(centerCircle);
+
+                    // Goal boxes
+                    const leftBox = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                    leftBox.setAttribute("x", "320");
+                    leftBox.setAttribute("y", "275");
+                    leftBox.setAttribute("width", "25");
+                    leftBox.setAttribute("height", "50");
+                    leftBox.setAttribute("fill", "none");
+                    leftBox.setAttribute("stroke", "rgba(255,255,255,0.7)");
+                    leftBox.setAttribute("stroke-width", "3");
+                    svg.appendChild(leftBox);
+
+                    const rightBox = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                    rightBox.setAttribute("x", "455");
+                    rightBox.setAttribute("y", "275");
+                    rightBox.setAttribute("width", "25");
+                    rightBox.setAttribute("height", "50");
+                    rightBox.setAttribute("fill", "none");
+                    rightBox.setAttribute("stroke", "rgba(255,255,255,0.7)");
+                    rightBox.setAttribute("stroke-width", "3");
+                    svg.appendChild(rightBox);
+                    
+                    // Inner field label
+                    const fieldLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    fieldLabel.setAttribute("x", "400");
+                    fieldLabel.setAttribute("y", "300");
+                    fieldLabel.setAttribute("fill", "rgba(255,255,255,0.4)");
+                    fieldLabel.setAttribute("font-size", "10px");
+                    fieldLabel.setAttribute("font-family", "'Outfit', sans-serif");
+                    fieldLabel.setAttribute("font-weight", "bold");
+                    fieldLabel.setAttribute("text-anchor", "middle");
+                    fieldLabel.setAttribute("dominant-baseline", "central");
+                    fieldLabel.textContent = "CANCHA";
+                    svg.appendChild(fieldLabel);
+                    
+                    // Render Concentric Rings
+                    rings.forEach((ring, rowIndex) => {
+                        const ringSeats = ring.seats;
+                        const seatCount = ringSeats.length;
+                        const a_in = ring.a_in;
+                        const a_out = ring.a_out;
+                        const b_in = ring.b_in;
+                        const b_out = ring.b_out;
+                        
+                        const a_avg = (a_in + a_out) / 2;
+                        const b_avg = (b_in + b_out) / 2;
+                        
+                        ringSeats.forEach((seat, colIndex) => {
+                            // Even distribution around the ellipse perimeter
+                            const theta = (colIndex / seatCount) * 2 * Math.PI - (Math.PI / 2);
+                            const theta_c = theta;
+                            
+                            // Walkway gaps (15%) between wedges
+                            const deltaTheta = 2 * Math.PI / seatCount;
+                            const theta1 = theta_c - (deltaTheta * 0.85) / 2;
+                            const theta2 = theta_c + (deltaTheta * 0.85) / 2;
+                            
+                            const x1 = 400 + a_in * Math.cos(theta1);
+                            const y1 = 300 + b_in * Math.sin(theta1);
+                            
+                            const x2 = 400 + a_out * Math.cos(theta1);
+                            const y2 = 300 + b_out * Math.sin(theta1);
+                            
+                            const x3 = 400 + a_out * Math.cos(theta2);
+                            const y3 = 300 + b_out * Math.sin(theta2);
+                            
+                            const x4 = 400 + a_in * Math.cos(theta2);
+                            const y4 = 300 + b_in * Math.sin(theta2);
+                            
+                            const cx = 400 + a_avg * Math.cos(theta_c);
+                            const cy = 300 + b_avg * Math.sin(theta_c);
+                            
+                            const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                            g.setAttribute("class", "svg-seat");
+                            
+                            const seatPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                            const d = `M ${x1} ${y1} L ${x2} ${y2} A ${a_out} ${b_out} 0 0 1 ${x3} ${y3} L ${x4} ${y4} A ${a_in} ${b_in} 0 0 0 ${x1} ${y1} Z`;
+                            seatPath.setAttribute("d", d);
+                            
+                            let fillColor = "#1E293B"; // slate-800
+                            let strokeColor = "rgba(255,255,255,0.08)";
+                            
+                            if (seat.status === 'BOOKED') {
+                                fillColor = "#1E293B"; // Sold/unoccupied dark grey
+                                g.style.cursor = "not-allowed";
+                            } else if (seat.status === 'LOCKED') {
+                                fillColor = "#F59E0B"; // orange
+                                g.style.cursor = "not-allowed";
+                            } else {
+                                // Available stands coloring (VIP grey top/bottom, General red left/right)
+                                if (Math.abs(Math.cos(theta_c)) < 0.5) {
+                                    fillColor = "#475569"; // VIP Grey
+                                } else {
+                                    fillColor = "#DC2626"; // General Red
+                                }
+                                g.style.cursor = "pointer";
+                            }
+                            
+                            if (selectedSeats.includes(seat.id)) {
+                                fillColor = "#6366F1"; // indigo
+                            }
+                            
+                            seatPath.setAttribute("fill", fillColor);
+                            seatPath.setAttribute("stroke", strokeColor);
+                            seatPath.setAttribute("stroke-width", "1");
+                            seatPath.setAttribute("id", `seat-rect-${seat.id}`);
+                            
+                            // Tooltip info
+                            const tooltip = document.createElementNS("http://www.w3.org/2000/svg", "title");
+                            tooltip.textContent = `Asiento ${seat.seat_number} - ${seat.status === 'AVAILABLE' ? 'Libre' : (seat.status === 'BOOKED' ? 'Vendido' : 'Reservando')}`;
+                            g.appendChild(tooltip);
+                            g.appendChild(seatPath);
+                            
+                            // Seat label text centered
+                            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                            text.setAttribute("x", cx.toString());
+                            text.setAttribute("y", (cy + 1).toString());
+                            text.setAttribute("fill", "#ffffff");
+                            text.setAttribute("font-size", "7px");
+                            text.setAttribute("font-family", "'Outfit', sans-serif");
+                            text.setAttribute("font-weight", "bold");
+                            text.setAttribute("text-anchor", "middle");
+                            text.setAttribute("dominant-baseline", "central");
+                            text.style.pointerEvents = "none";
+                            text.textContent = seat.seat_number;
+                            g.appendChild(text);
+                            
+                            if (seat.status === 'AVAILABLE') {
+                                const defaultColor = Math.abs(Math.cos(theta_c)) < 0.5 ? "#475569" : "#DC2626";
+                                g.onclick = () => toggleSeatSelection(seatPath, seat.id, seat.seat_number, price, defaultColor);
+                            }
+                            
+                            svg.appendChild(g);
+                        });
+                    });
+                    
+                    grid.appendChild(svg);
+                }
+            } catch (err) {
+                console.error("Error loading seats map:", err);
+            }
+        }
+
+        function toggleSeatSelection(rect, seatId, seatNumber, price, defaultColor) {
+            if (selectedSeats.includes(seatId)) {
+                selectedSeats = selectedSeats.filter(id => id !== seatId);
+                rect.setAttribute("fill", defaultColor); // revert to its category color
+            } else {
+                selectedSeats.push(seatId);
+                rect.setAttribute("fill", "#6366F1"); // indigo
+            }
+            
+            // Sync selected seat text list
+            const names = [];
+            selectedSeats.forEach(id => {
+                const el = document.getElementById(`seat-rect-${id}`);
+                if (el) {
+                    const parent = el.parentNode;
+                    const textNode = parent.querySelector("text");
+                    if (textNode) names.push(textNode.textContent);
+                }
+            });
+            
+            document.getElementById("selected-seats-display").innerText = names.length > 0 ? names.join(", ") : "Ninguno";
+            
+            const total = selectedSeats.length * price;
+            document.getElementById("subtotal-display").innerText = `$${total.toFixed(2)}`;
+            
+            document.getElementById("book-seats-btn").disabled = selectedSeats.length === 0;
+        }
+
+        // CREATE ORDER & HOLD SEATS (REDIS LOCK)
+        async function initiateCheckout() {
+            if (!selectedEventId || selectedSeats.length === 0) return;
+            
+            toggleLoader(true, "Bloqueando asientos en Redis...");
+            
+            try {
+                const response = await fetch("/orders/", {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        event_id: selectedEventId,
+                        seat_ids: selectedSeats
+                    })
+                });
+
+                if (response.ok) {
+                    currentOrder = await response.json();
+                    
+                    // Show checkout modal
+                    document.getElementById("modal-amount-display").innerText = `$${currentOrder.total_price.toFixed(2)}`;
+                    document.getElementById("modal-order-id").innerText = currentOrder.id;
+                    
+                    document.getElementById("checkout-modal").style.display = "flex";
+                } else {
+                    const err = await response.json();
+                    alert("No se pudo reservar el asiento: " + (err.detail || "Intente nuevamente."));
+                    // Reload map to sync current locks
+                    loadEvents();
+                    document.getElementById("seating-selection-card").style.display = "none";
+                    document.getElementById("seating-placeholder").style.display = "block";
+                }
+            } catch (err) {
+                alert("Error de red.");
+            } finally {
+                toggleLoader(false);
+            }
+        }
+
+        function closeCheckoutModal() {
+            document.getElementById("checkout-modal").style.display = "none";
+            // Reload the seat map to release visually if client cancels, or let TTL expire
+            if (selectedEventId) {
+                selectEvent({ id: selectedEventId });
+            }
+        }
+
+        // PAYMENT CHECKOUT (LAMBDA INVOCATION)
+        async function handlePaymentSubmit(e) {
+            e.preventDefault();
+            if (!currentOrder) return;
+            
+            document.getElementById("checkout-modal").style.display = "none";
+            toggleLoader(true, "Simulando pago (Llamando AWS Lambda)...");
+            
+            const cardNum = document.getElementById("card-num").value;
+            const expMonth = parseInt(document.getElementById("card-month").value);
+            const expYear = parseInt(document.getElementById("card-year").value);
+            const cvc = document.getElementById("card-cvc").value;
+
+            try {
+                const response = await fetch(`/orders/${currentOrder.id}/checkout`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        order_id: currentOrder.id,
+                        card_number: cardNum,
+                        exp_month: expMonth,
+                        exp_year: expYear,
+                        cvc: cvc
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        // Payment Successful! Show tickets summary
+                        showTicketsSummary(data);
+                    } else {
+                        alert("Pago rechazado: " + data.message);
+                        // Reload state
+                        if (selectedEventId) selectEvent({ id: selectedEventId });
+                    }
+                } else {
+                    alert("Error en el checkout.");
+                }
+            } catch (err) {
+                alert("Error al procesar pago.");
+            } finally {
+                toggleLoader(false);
+            }
+        }
+
+        function showTicketsSummary(checkoutResult) {
+            const container = document.getElementById("tickets-links-container");
+            container.innerHTML = "";
+            
+            const ticketsList = checkoutResult.tickets || [];
+            if (ticketsList.length === 0 && checkoutResult.transaction_id) {
+                ticketsList.push(checkoutResult.transaction_id);
+            }
+            
+            ticketsList.forEach((uuid, index) => {
+                const linkDiv = document.createElement("div");
+                linkDiv.style.marginBottom = "14px";
+                linkDiv.style.borderBottom = "1px solid rgba(255,255,255,0.05)";
+                linkDiv.style.paddingBottom = "10px";
+                linkDiv.innerHTML = `
+                    <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Boleto #${index + 1}:</div>
+                    <a href="/t/${uuid}" target="_blank" style="color: var(--secondary); font-weight: 700; text-decoration: underline; font-size: 15px; display: block; margin-top: 4px;">
+                        🎟️ Ver Boleto #${uuid.substring(0, 8)}
+                    </a>
+                    <span style="font-size: 11px; color: var(--text-muted); display:block; margin-top: 2px;">
+                        Abre este link en tu PC o celular para ver el boleto móvil y su código QR.
+                    </span>
+                `;
+                container.appendChild(linkDiv);
+            });
+            
+            const infoMsg = document.createElement("p");
+            infoMsg.style.fontSize = "11px";
+            infoMsg.style.color = "var(--text-muted)";
+            infoMsg.style.marginTop = "14px";
+            infoMsg.innerHTML = "💡 Puedes ver y descargar todos tus códigos QR en la pestaña <strong>Mis Boletos</strong> en cualquier momento.";
+            container.appendChild(infoMsg);
+            
+            document.getElementById("summary-modal").style.display = "flex";
+        }
+
+        let pollingTimer = null;
+
+        async function loadMyTickets(silent = false) {
+            const container = document.getElementById("my-tickets-container");
+            if (!silent) {
+                container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 40px;">Cargando tus boletos...</div>`;
+            }
+            
+            // Prevent duplicate polling timers
+            if (pollingTimer) {
+                clearTimeout(pollingTimer);
+                pollingTimer = null;
+            }
+            
+            try {
+                const response = await fetch("/my", {
+                    headers: { "Authorization": `Bearer ${authToken}` }
+                });
+                
+                if (response.ok) {
+                    const tickets = await response.json();
+                    container.innerHTML = "";
+                    
+                    if (tickets.length === 0) {
+                        container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 40px;">No has adquirido boletos todavía.</div>`;
+                        return;
+                    }
+                    
+                    let hasPending = false;
+                    tickets.forEach(ticket => {
+                        const card = document.createElement("div");
+                        card.className = "glass-card";
+                        card.style.display = "flex";
+                        card.style.gap = "24px";
+                        card.style.alignItems = "center";
+                        card.style.padding = "20px";
+                        card.style.marginBottom = "16px";
+                        
+                        const date = new Date(ticket.event_date);
+                        const formattedDate = date.toLocaleDateString('es-ES', { 
+                            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                        });
+                        
+                        let qrHtml = "";
+                        if (ticket.qr_code_url) {
+                            qrHtml = `
+                                <div style="background: white; padding: 10px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+                                    <img src="${ticket.qr_code_url}" style="width: 140px; height: 140px; display: block;" alt="QR Code">
+                                </div>
+                            `;
+                        } else {
+                            hasPending = true;
+                            qrHtml = `
+                                <div style="background: rgba(15,23,42,0.4); border: 1px dashed rgba(255,255,255,0.1); width: 140px; height: 140px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 10px; box-sizing: border-box;">
+                                    <div class="spinner" style="width: 24px; height: 24px; border: 3px solid rgba(255,255,255,0.1); border-left-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 8px;"></div>
+                                    <span style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Generando QR...</span>
+                                    <button onclick="loadMyTickets()" style="background: transparent; border: none; color: var(--primary); font-size: 11px; font-weight: bold; cursor: pointer; text-decoration: underline; margin-top: 6px;">🔄 Recargar</button>
+                                </div>
+                            `;
+                        }
+                        
+                        let validationStatus = "";
+                        let footerHelpText = "";
+                        
+                        const currentActiveRole = (userRole === "admin") ? simulatedRole : userRole;
+                        
+                        if (currentActiveRole === "staff" || currentActiveRole === "admin") {
+                            if (ticket.is_validated) {
+                                validationStatus = `<span style="font-size: 11px; background: rgba(16,185,129,0.15); color: #10B981; border: 1px solid rgba(16,185,129,0.3); padding: 4px 10px; border-radius: 10px; font-weight: 700; text-transform: uppercase;">🟢 VALIDADO / INGRESADO</span>`;
+                                footerHelpText = `<div style="margin-top: 8px; font-size: 12px; color: #EF4444; font-weight: 600;">🔒 QR validado - Este boleto ya no se puede usar de nuevo.</div>`;
+                            } else {
+                                validationStatus = `<span style="font-size: 11px; background: rgba(245,158,11,0.15); color: #F59E0B; border: 1px solid rgba(245,158,11,0.3); padding: 4px 10px; border-radius: 10px; font-weight: 700; text-transform: uppercase;">🟠 A LA ESPERA / EN COLA</span>`;
+                                footerHelpText = `<div style="margin-top: 8px; font-size: 12px; color: var(--text-muted);">⌛ Boleto pendiente por escanear en la entrada.</div>`;
+                            }
+                        } else {
+                            if (ticket.is_validated) {
+                                validationStatus = `<span style="font-size: 11px; background: rgba(239,68,68,0.15); color: #EF4444; border: 1px solid rgba(239,68,68,0.3); padding: 4px 10px; border-radius: 10px; font-weight: 700; text-transform: uppercase;">❌ VALIDADO / USADO</span>`;
+                                footerHelpText = `<div style="margin-top: 8px; font-size: 12px; color: #EF4444; font-weight: 600;">🔒 Boleto ya utilizado. Acceso denegado para re-ingresos.</div>`;
+                            } else {
+                                validationStatus = `<span style="font-size: 11px; background: rgba(16,185,129,0.15); color: #10B981; border: 1px solid rgba(16,185,129,0.3); padding: 4px 10px; border-radius: 10px; font-weight: 700; text-transform: uppercase;">🎟️ ACTIVO / LISTO</span>`;
+                                footerHelpText = `<div style="margin-top: 8px; font-size: 12px; color: var(--secondary);">✨ Presenta este código QR en portería para ingresar.</div>`;
+                            }
+                        }
+                        
+                        card.innerHTML = `
+                            <div style="flex-shrink: 0;">
+                                ${qrHtml}
+                            </div>
+                            <div style="flex-grow: 1; text-align: left;">
+                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px; gap: 12px;">
+                                    <h4 style="font-family: 'Outfit', sans-serif; font-size: 18px; margin: 0; color: var(--text-light);">${ticket.event_title}</h4>
+                                    ${validationStatus}
+                                </div>
+                                <p style="margin: 0 0 6px 0; font-size: 13px; color: var(--text-muted);">👤 Comprador: <strong>${ticket.buyer_name || "Desconocido"}</strong></p>
+                                <p style="margin: 0 0 6px 0; font-size: 13px; color: var(--text-muted);">📍 Estadio: <strong>${ticket.event_location}</strong></p>
+                                <p style="margin: 0 0 6px 0; font-size: 13px; color: var(--text-muted);">📅 Fecha: <strong>${formattedDate}</strong></p>
+                                <p style="margin: 0 0 8px 0; font-size: 14px; color: var(--secondary);">🎟️ Asiento: <strong style="font-size: 16px;">${ticket.seat_number}</strong></p>
+                                ${footerHelpText}
+                                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 12px;">
+                                    <a href="/t/${ticket.ticket_uuid}" target="_blank" class="btn-primary" style="padding: 8px 16px; font-size: 12px; border-radius: 8px; width: auto; display: inline-block; text-decoration: none; text-align: center;">
+                                        Abrir Vista de Boleto Móvil
+                                    </a>
+                                    <span style="font-family: monospace; font-size: 10px; color: var(--text-muted);">UUID: ${ticket.ticket_uuid.substring(0, 18)}...</span>
+                                </div>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+                    
+                    // Automatically schedule a silent refresh in 2 seconds if QR is still loading
+                    if (hasPending) {
+                        pollingTimer = setTimeout(() => loadMyTickets(true), 2000);
+                    }
+                } else {
+                    container.innerHTML = `<div style="text-align: center; color: var(--danger); padding: 40px;">Error al cargar boletos del servidor.</div>`;
+                }
+            } catch (err) {
+                container.innerHTML = `<div style="text-align: center; color: var(--danger); padding: 40px;">Error de conexión.</div>`;
+            }
+        }
+
+        function closeSummaryModal() {
+            document.getElementById("summary-modal").style.display = "none";
+            // Clean state and reload events
+            selectedSeats = [];
+            selectedEventId = null;
+            currentOrder = null;
+            loadEvents();
+            document.getElementById("seating-selection-card").style.display = "none";
+            document.getElementById("seating-placeholder").style.display = "block";
+        }
+
+        // CREATE NEW EVENT (ADMIN ONLY)
+        async function handleCreateEvent(e) {
+            e.preventDefault();
+            toggleLoader(true, "Generando evento y asientos...");
+            
+            const title = document.getElementById("evt-title").value;
+            const description = document.getElementById("evt-desc").value;
+            const date = document.getElementById("evt-date").value;
+            const location = document.getElementById("evt-loc").value;
+            const ticket_price = parseFloat(document.getElementById("evt-price").value);
+            const total_seats = parseInt(document.getElementById("evt-seats").value);
+
+            try {
+                const response = await fetch("/events", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        title, description, date, location, ticket_price, total_seats
+                    })
+                });
+
+                if (response.ok) {
+                    alert("Evento y mapa de asientos creados con éxito.");
+                    // Reset fields
+                    document.getElementById("evt-title").value = "";
+                    document.getElementById("evt-desc").value = "";
+                    document.getElementById("evt-date").value = "";
+                    document.getElementById("evt-loc").value = "";
+                    document.getElementById("evt-price").value = "";
+                    document.getElementById("evt-seats").value = "";
+                    
+                    loadEvents();
+                    loadDashboardData();
+                } else {
+                    const err = await response.json();
+                    alert("Error al crear evento: " + (err.detail || response.statusText));
+                }
+            } catch (err) {
+                alert("Error de comunicación.");
+            } finally {
+                toggleLoader(false);
+            }
+        }
+
+        // LOAD DASHBOARD DATA (ADMIN ONLY)
+        async function loadDashboardData() {
+            try {
+                const response = await fetch("/dashboard", {
+                    headers: { "Authorization": `Bearer ${authToken}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    document.getElementById("metric-events").innerText = data.summary.total_events;
+                    document.getElementById("metric-sold").innerText = data.summary.total_tickets_sold;
+                    document.getElementById("metric-revenue").innerText = `$${data.summary.total_revenue.toFixed(2)}`;
+                    document.getElementById("metric-validated").innerText = data.summary.validated_tickets;
+                    
+                    // Update Progress Bars
+                    const inv = data.inventory;
+                    const total = inv.total_seats || 1;
+                    
+                    document.getElementById("inv-free-text").innerText = `${inv.available_seats} / ${total}`;
+                    document.getElementById("inv-lock-text").innerText = `${inv.locked_seats} / ${total}`;
+                    document.getElementById("inv-book-text").innerText = `${inv.booked_seats} / ${total}`;
+                    
+                    document.getElementById("inv-free-bar").style.width = `${(inv.available_seats / total) * 100}%`;
+                    document.getElementById("inv-lock-bar").style.width = `${(inv.locked_seats / total) * 100}%`;
+                    document.getElementById("inv-book-bar").style.width = `${(inv.booked_seats / total) * 100}%`;
+                }
+            } catch (err) {
+                console.error("Error loading dashboard data:", err);
+            }
+        }
+
+        // STAFF: SIMULATE TICKET SCAN
+        async function simulateTicketScan() {
+            const uuidInput = document.getElementById("scan-uuid-input");
+            let rawInput = uuidInput.value.trim();
+            
+            if (!rawInput) {
+                alert("Por favor ingresa un UUID válido.");
+                return;
+            }
+            
+            // Automatically clean the input to extract only the UUID if they pasted a link or path
+            let uuid = rawInput;
+            if (rawInput.includes("/")) {
+                const parts = rawInput.split("/");
+                uuid = parts.filter(p => p.trim() !== "").pop() || rawInput;
+            }
+            
+            toggleLoader(true, "Validando boleto...");
+            const feedback = document.getElementById("scanner-feedback");
+            feedback.style.display = "none";
+
+            try {
+                // We call the validation route in browser or via API
+                // Let's call the JSON endpoint validate-json
+                const response = await fetch(`/validate-json/${uuid}`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${authToken}` }
+                });
+                
+                const data = await response.json();
+                feedback.style.display = "block";
+                
+                if (response.ok && data.success) {
+                    feedback.className = "scan-feedback scan-success";
+                    feedback.innerHTML = `
+                        <div style="font-size: 24px; margin-bottom: 8px;">✓ ACCESO CONCEDIDO</div>
+                        <div>Partido: ${data.event_title}</div>
+                        <div>Asiento: ${data.seat_number}</div>
+                        <div>Asistente: ${data.buyer_name}</div>
+                        <div style="font-size: 11px; margin-top: 8px; color: var(--secondary);">Registrado en DB: ${new Date(data.validated_at).toLocaleString()}</div>
+                    `;
+                    uuidInput.value = ""; // Clear input on success
+                } else {
+                    feedback.className = "scan-feedback scan-error";
+                    feedback.innerHTML = `
+                        <div style="font-size: 24px; margin-bottom: 8px;">✗ ACCESO DENEGADO</div>
+                        <div>Motivo: ${data.detail || data.message || "Boleto ya utilizado o inexistente."}</div>
+                    `;
+                }
+            } catch (err) {
+                feedback.style.display = "block";
+                feedback.className = "scan-feedback scan-error";
+                feedback.innerHTML = `<div style="font-size: 20px;">Error de red al conectar al Gateway de validación.</div>`;
+            } finally {
+                toggleLoader(false);
+            }
+        }
+
+        // ==========================================
+        // ADMIN EVENT MANAGEMENT JS FUNCTIONS
+        // ==========================================
+        async function loadAdminEventsList() {
+            const tbody = document.getElementById("admin-events-tbody");
+            if (!tbody) return;
+            
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--text-muted);">Cargando historial de eventos...</td></tr>`;
+            
+            try {
+                const response = await fetch("/admin/events", {
+                    headers: { "Authorization": `Bearer ${authToken}` }
+                });
+                
+                if (response.ok) {
+                    const events = await response.json();
+                    tbody.innerHTML = "";
+                    
+                    if (events.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--text-muted);">No hay eventos deportivos creados.</td></tr>`;
+                        return;
+                    }
+                    
+                    events.forEach(evt => {
+                        const date = new Date(evt.date);
+                        const formattedDate = date.toLocaleDateString('es-ES', { 
+                            year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                        });
+                        
+                        const visibilityBadge = evt.is_visible
+                            ? `<span style="background: rgba(16,185,129,0.15); color: #10B981; border: 1px solid rgba(16,185,129,0.3); padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 11px;">VISIBLE</span>`
+                            : `<span style="background: rgba(245,158,11,0.15); color: #F59E0B; border: 1px solid rgba(245,158,11,0.3); padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 11px;">OCULTO</span>`;
+                            
+                        const tr = document.createElement("tr");
+                        tr.style.borderBottom = "1px solid var(--card-border)";
+                        
+                        // Safely stringify event object for HTML attribute
+                        const evtString = JSON.stringify(evt).replace(/"/g, '&quot;');
+                        
+                        tr.innerHTML = `
+                            <td style="padding: 12px 8px; color: var(--text-light); font-weight: 600;">${evt.title}</td>
+                            <td style="padding: 12px 8px;">${evt.location}</td>
+                            <td style="padding: 12px 8px;">${formattedDate}</td>
+                            <td style="padding: 12px 8px; color: var(--secondary); font-weight: 700;">$${evt.ticket_price.toFixed(2)}</td>
+                            <td style="padding: 12px 8px;">${evt.total_seats} asientos</td>
+                            <td style="padding: 12px 8px;">${visibilityBadge}</td>
+                            <td style="padding: 12px 8px; text-align: center;">
+                                <div style="display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                                    <button class="btn-primary" style="padding: 6px 12px; font-size: 11px; width: auto; background: rgba(99,102,241,0.15); color: #818CF8; border: 1px solid rgba(99,102,241,0.3);" onclick="openEditEventModal(${evtString})">Editar</button>
+                                    <button class="btn-primary" style="padding: 6px 12px; font-size: 11px; width: auto; background: rgba(245,158,11,0.15); color: #F59E0B; border: 1px solid rgba(245,158,11,0.3);" onclick="toggleEventVisibility(${evt.id}, ${evt.is_visible})">Toggle</button>
+                                    <button class="btn-primary" style="padding: 6px 12px; font-size: 11px; width: auto; background: rgba(239,68,68,0.15); color: #EF4444; border: 1px solid rgba(239,68,68,0.3);" onclick="deleteEvent(${evt.id})">Eliminar</button>
+                                </div>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--danger);">Error al cargar historial desde la API.</td></tr>`;
+                }
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--danger);">Error de conexión.</td></tr>`;
+            }
+        }
+
+        function openEditEventModal(evt) {
+            document.getElementById("edit-evt-id").value = evt.id;
+            document.getElementById("edit-evt-title").value = evt.title;
+            document.getElementById("edit-evt-desc").value = evt.description || "";
+            
+            // Format datetime local correctly: YYYY-MM-DDTHH:MM
+            const dateObj = new Date(evt.date);
+            const yyyy = dateObj.getFullYear();
+            const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const dd = String(dateObj.getDate()).padStart(2, '0');
+            const hh = String(dateObj.getHours()).padStart(2, '0');
+            const min = String(dateObj.getMinutes()).padStart(2, '0');
+            document.getElementById("edit-evt-date").value = `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+            
+            document.getElementById("edit-evt-loc").value = evt.location;
+            document.getElementById("edit-evt-price").value = evt.ticket_price;
+            document.getElementById("edit-evt-status").value = evt.is_visible ? "visible" : "hidden";
+            
+            document.getElementById("edit-event-modal").style.display = "flex";
+        }
+        
+        function closeEditEventModal() {
+            document.getElementById("edit-event-modal").style.display = "none";
+        }
+        
+        async function handleEditEventSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById("edit-evt-id").value;
+            const title = document.getElementById("edit-evt-title").value;
+            const description = document.getElementById("edit-evt-desc").value;
+            const date = document.getElementById("edit-evt-date").value;
+            const location = document.getElementById("edit-evt-loc").value;
+            const ticket_price = parseFloat(document.getElementById("edit-evt-price").value);
+            const is_visible = document.getElementById("edit-evt-status").value === "visible";
+            
+            toggleLoader(true, "Actualizando evento...");
+            try {
+                const response = await fetch(`/admin/events/${id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        title, description, date, location, ticket_price, is_visible
+                    })
+                });
+                
+                if (response.ok) {
+                    alert("Evento actualizado con éxito.");
+                    closeEditEventModal();
+                    loadAdminEventsList();
+                    loadEvents(); // sync general list
+                    loadDashboardData(); // sync stats if prices changed
+                } else {
+                    const err = await response.json();
+                    alert("Error al actualizar: " + (err.detail || response.statusText));
+                }
+            } catch (err) {
+                alert("Error de comunicación con el Gateway.");
+            } finally {
+                toggleLoader(false);
+            }
+        }
+        
+        async function toggleEventVisibility(id, currentVisible) {
+            toggleLoader(true, "Cambiando visibilidad del evento...");
+            try {
+                const response = await fetch(`/admin/events/${id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        is_visible: !currentVisible
+                    })
+                });
+                
+                if (response.ok) {
+                    loadAdminEventsList();
+                    loadEvents(); // sync general list
+                } else {
+                    alert("Error al modificar la visibilidad.");
+                }
+            } catch (err) {
+                alert("Error de comunicación.");
+            } finally {
+                toggleLoader(false);
+            }
+        }
+        
+        async function deleteEvent(id) {
+            if (!confirm("⚠️ ¿Estás seguro de eliminar este evento? Se eliminarán todos los asientos, compras y boletos asociados a él de forma permanente.")) return;
+            
+            toggleLoader(true, "Eliminando evento deportivo...");
+            try {
+                const response = await fetch(`/admin/events/${id}`, {
+                    method: "DELETE",
+                    headers: {
+                        "Authorization": `Bearer ${authToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    alert("Evento eliminado con éxito.");
+                    loadAdminEventsList();
+                    loadEvents(); // sync general list
+                    loadDashboardData(); // sync metrics
+                } else {
+                    alert("Error al eliminar el evento.");
+                }
+            } catch (err) {
+                alert("Error de comunicación.");
+            } finally {
+                toggleLoader(false);
+            }
+        }
+
+        let html5QrcodeScanner = null;
+
+        function startCameraScanner() {
+            const qrReaderDiv = document.getElementById("qr-reader");
+            const startBtn = document.getElementById("start-cam-btn");
+            const stopBtn = document.getElementById("stop-cam-btn");
+            
+            // Clear any previous alerts
+            const feedback = document.getElementById("scanner-feedback");
+            if (feedback) feedback.style.display = "none";
+            
+            if (startBtn) startBtn.disabled = true;
+            if (stopBtn) stopBtn.disabled = false;
+            
+            // Instantiate html5-qrcode reader
+            html5QrcodeScanner = new Html5Qrcode("qr-reader");
+            
+            // Start scanning with back camera (environment) if available
+            html5QrcodeScanner.start(
+                { facingMode: "environment" }, 
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 }
+                },
+                (decodedText, decodedResult) => {
+                    // Success callback: we detected a QR code!
+                    console.log(`Scan successful: ${decodedText}`);
+                    
+                    // The decoded text should be our ticket UUID!
+                    const uuidInput = document.getElementById("scan-uuid-input");
+                    if (uuidInput) uuidInput.value = decodedText;
+                    
+                    // Stop camera scanner
+                    stopCameraScanner();
+                    
+                    // Automatically validate the scanned ticket UUID!
+                    simulateTicketScan();
+                },
+                (errorMessage) => {
+                    // Scan error callback (usually prints noise/not-found constantly)
+                    // We don't flood the console here
+                }
+            ).catch(err => {
+                console.error("Error starting camera: ", err);
+                alert("No se pudo iniciar la cámara. Revisa los permisos o usa HTTPS/localhost.");
+                if (startBtn) startBtn.disabled = false;
+                if (stopBtn) stopBtn.disabled = true;
+            });
+        }
+        
+        async function stopCameraScanner() {
+            const startBtn = document.getElementById("start-cam-btn");
+            const stopBtn = document.getElementById("stop-cam-btn");
+            
+            if (startBtn) startBtn.disabled = false;
+            if (stopBtn) stopBtn.disabled = true;
+            
+            if (html5QrcodeScanner) {
+                try {
+                    await html5QrcodeScanner.stop();
+                } catch (err) {
+                    console.warn("Error stopping scanner: ", err);
+                }
+                html5QrcodeScanner = null;
+            }
+        }
+
+    </script>
+</body>
+</html>
