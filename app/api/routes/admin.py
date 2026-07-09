@@ -197,3 +197,63 @@ def delete_event(
     db.commit()
     return {"success": True, "message": "Event deleted successfully"}
 
+@router.get("/admin/customers", status_code=status.HTTP_200_OK)
+def get_customers_history(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(admin_only)
+):
+    """
+    Returns a list of all client users, their registration date,
+    total orders, and detailed transaction history (orders, tickets, events, seats).
+    """
+    clients = db.query(User).filter(User.role == "client").all()
+    
+    result = []
+    for client in clients:
+        # Get client orders
+        orders = db.query(Order).filter(Order.user_id == client.id).order_by(Order.created_at.desc()).all()
+        
+        # Calculate registration date (first order date or default to current date)
+        if orders:
+            reg_date = min(o.created_at for o in orders)
+        else:
+            reg_date = datetime.now() # Fallback
+            
+        orders_list = []
+        for order in orders:
+            event = order.event
+            tickets = order.tickets
+            seats_str = ", ".join([t.seat.seat_number for t in tickets if t.seat])
+            
+            tickets_detail = []
+            for t in tickets:
+                tickets_detail.append({
+                    "ticket_uuid": t.ticket_uuid,
+                    "seat_number": t.seat.seat_number if t.seat else "N/A",
+                    "is_validated": t.is_validated,
+                    "validated_at": t.validated_at.isoformat() if t.validated_at else None
+                })
+                
+            orders_list.append({
+                "order_id": order.id,
+                "event_title": event.title if event else "Unknown Event",
+                "event_location": event.location if event else "Unknown Location",
+                "event_date": event.date.isoformat() if event and event.date else None,
+                "status": order.status,
+                "total_price": order.total_price,
+                "created_at": order.created_at.isoformat(),
+                "seats": seats_str,
+                "tickets": tickets_detail
+            })
+            
+        result.append({
+            "id": client.id,
+            "full_name": client.full_name or "Cliente Registrado",
+            "email": client.email,
+            "created_at": reg_date.isoformat(),
+            "total_orders": len(orders),
+            "orders": orders_list
+        })
+        
+    return result
+

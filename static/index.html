@@ -91,6 +91,7 @@
                 <button id="tab-my-tickets-btn" class="tab-btn" onclick="switchPortalTab('my-tickets')">🎫 Mis Boletos</button>
                 <button id="tab-admin-btn" class="tab-btn" onclick="switchPortalTab('admin')" style="display: none;">⚙️ Panel Administrativo</button>
                 <button id="tab-scan-btn" class="tab-btn" onclick="switchPortalTab('scan')" style="display: none;">🔍 Validar Entradas</button>
+                <button id="tab-customers-btn" class="tab-btn" onclick="switchPortalTab('customers')" style="display: none;">👥 Historial de Clientes</button>
             </nav>
 
             <!-- TAB 1: BUY TICKETS -->
@@ -321,6 +322,93 @@
                 </div>
             </section>
 
+            <!-- TAB 5: CUSTOMER HISTORY -->
+            <section id="tab-customers" class="tab-content">
+                
+                <!-- LIST VIEW -->
+                <div id="customers-list-view" class="glass-card" style="max-width: 900px; margin: 0 auto; padding: 32px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid var(--card-border); padding-bottom: 16px;">
+                        <h2 style="font-family: 'Outfit', sans-serif; font-size: 26px; margin: 0;">👥 Historial de Clientes</h2>
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <span class="role-badge" style="background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.3); color: var(--primary); font-weight: bold; border: 1px solid; border-radius: 10px; padding: 4px 12px; font-size: 11px;">Total: <span id="total-customers-badge">0</span></span>
+                            <button class="logout-btn" onclick="loadCustomersHistory()" style="background: rgba(16,185,129,0.1); color: var(--secondary); border-color: rgba(16,185,129,0.3); font-weight: bold;">🔄 Actualizar</button>
+                        </div>
+                    </div>
+                    
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--card-border); color: var(--text-light); font-size: 14px; font-weight: 600;">
+                                    <th style="padding: 12px 8px;">ID</th>
+                                    <th style="padding: 12px 8px;">Nombre</th>
+                                    <th style="padding: 12px 8px;">Correo</th>
+                                    <th style="padding: 12px 8px;">Fecha Registro</th>
+                                    <th style="padding: 12px 8px; text-align: center;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customers-table-body" style="font-size: 13px; color: var(--text-muted);">
+                                <!-- Loaded via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- DETAIL VIEW -->
+                <div id="customer-detail-view" style="max-width: 950px; margin: 0 auto; display: none;">
+                    
+                    <!-- Header navigation -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <span style="font-size: 14px; color: var(--text-muted); font-weight: 500;">
+                            Estás viendo: <strong id="detail-customer-header-name" style="color: var(--secondary);">Cargando...</strong>
+                        </span>
+                        <button class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 13px; background: rgba(255,255,255,0.05); color: var(--text-light); border: 1px solid var(--card-border); cursor: pointer;" onclick="renderCustomersList(customersData)">
+                            ⬅️ Volver al Listado
+                        </button>
+                    </div>
+
+                    <!-- Main Grid -->
+                    <div style="display: grid; grid-template-columns: 1.2fr 2fr; gap: 24px; align-items: start;">
+                        
+                        <!-- Left Card: Customer Profile Summary -->
+                        <div class="glass-card" style="padding: 24px; text-align: center;">
+                            <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 36px; margin: 0 auto 16px auto; font-weight: bold;">
+                                👤
+                            </div>
+                            <h3 id="detail-customer-name" style="font-family: 'Outfit', sans-serif; font-size: 22px; margin: 0 0 4px 0; color: var(--text-light);">Cargando...</h3>
+                            <p style="color: var(--text-muted); font-size: 13px; margin: 0 0 16px 0;">Cliente Registrado</p>
+                            
+                            <span id="detail-customer-id-badge" class="role-badge" style="background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.4); color: var(--secondary); font-weight: bold; font-size: 11px; padding: 4px 10px; border-radius: 8px; border: 1px solid;">ID: #0</span>
+                            
+                            <div style="margin-top: 24px; border-top: 1px solid var(--card-border); padding-top: 20px; text-align: left; display: flex; flex-direction: column; gap: 14px;">
+                                <div>
+                                    <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold;">Correo</div>
+                                    <div id="detail-customer-email" style="font-size: 14px; font-weight: 500; word-break: break-all; color: var(--text-light);">...</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold;">Fecha Registro</div>
+                                    <div id="detail-customer-reg-date" style="font-size: 14px; font-weight: 500; color: var(--text-light);">...</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold;">Total Reservas</div>
+                                    <div id="detail-customer-total-orders" style="font-size: 16px; font-weight: bold; color: var(--primary);">0</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Card: Booking Purchase History -->
+                        <div class="glass-card" style="padding: 24px;">
+                            <h3 style="font-family: 'Outfit', sans-serif; font-size: 20px; margin: 0 0 20px 0; display: flex; align-items: center; gap: 8px;">📋 Historial de Reservas</h3>
+                            <div id="detail-orders-list" style="display: flex; flex-direction: column; gap: 12px; max-height: 500px; overflow-y: auto; padding-right: 4px;">
+                                <!-- Loaded via JS -->
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
             <!-- TAB 4: MY TICKETS -->
             <section id="tab-my-tickets" class="tab-content">
                 <div class="glass-card" style="max-width: 800px; margin: 0 auto; padding: 32px;">
@@ -519,6 +607,7 @@
             if (simulatedRole === "admin") {
                 document.getElementById("tab-admin-btn").style.display = "block";
                 document.getElementById("tab-scan-btn").style.display = "block";
+                document.getElementById("tab-customers-btn").style.display = "block";
                 loadDashboardData();
                 
                 // Show admin event manager list and rename tab
@@ -529,6 +618,7 @@
             } else if (simulatedRole === "staff") {
                 document.getElementById("tab-scan-btn").style.display = "block";
                 document.getElementById("tab-admin-btn").style.display = "none";
+                document.getElementById("tab-customers-btn").style.display = "none";
                 
                 // Show client booking grid and rename tab
                 if (tabBuyBtn) tabBuyBtn.innerHTML = "🎟️ Comprar Boletos";
@@ -537,6 +627,7 @@
             } else {
                 document.getElementById("tab-admin-btn").style.display = "none";
                 document.getElementById("tab-scan-btn").style.display = "none";
+                document.getElementById("tab-customers-btn").style.display = "none";
                 
                 // Show client booking grid and rename tab
                 if (tabBuyBtn) tabBuyBtn.innerHTML = "🎟️ Comprar Boletos";
@@ -565,7 +656,7 @@
             }
             
             // Redirect admin to buy or scan tab if active tab content gets hidden
-            if (activeTabContent && activeTabContent.id === "tab-admin" && newRole === "staff") {
+            if (activeTabContent && (activeTabContent.id === "tab-admin" || activeTabContent.id === "tab-customers") && newRole === "staff") {
                 switchPortalTab('scan');
             }
         }
@@ -589,7 +680,7 @@
         }
 
         function switchPortalTab(tabName) {
-            const tabs = ["buy", "admin", "scan", "my-tickets"];
+            const tabs = ["buy", "admin", "scan", "my-tickets", "customers"];
             tabs.forEach(t => {
                 const content = document.getElementById(`tab-${t}`);
                 const btn = document.getElementById(`tab-${t}-btn`);
@@ -611,6 +702,8 @@
             
             if (tabName === 'admin') {
                 loadDashboardData();
+            } else if (tabName === 'customers') {
+                loadCustomersHistory();
             } else if (tabName === 'my-tickets') {
                 loadMyTickets();
             } else if (tabName === 'buy') {
@@ -1695,6 +1788,152 @@
                 }
                 html5QrcodeScanner = null;
             }
+        }
+
+        // --- CLIENT HISTORY SECTION LOGIC ---
+        let customersData = [];
+
+        async function loadCustomersHistory() {
+            try {
+                const response = await fetch("/admin/customers", {
+                    headers: { "Authorization": `Bearer ${authToken}` }
+                });
+                if (response.ok) {
+                    customersData = await response.json();
+                    renderCustomersList(customersData);
+                } else {
+                    console.error("Error loading customers history:", response.statusText);
+                }
+            } catch (err) {
+                console.error("Error fetching customers:", err);
+            }
+        }
+
+        function renderCustomersList(customers) {
+            document.getElementById("customers-list-view").style.display = "block";
+            document.getElementById("customer-detail-view").style.display = "none";
+
+            document.getElementById("total-customers-badge").innerText = customers.length;
+
+            const tbody = document.getElementById("customers-table-body");
+            tbody.innerHTML = "";
+
+            if (customers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No hay clientes registrados en el sistema.</td></tr>`;
+                return;
+            }
+
+            customers.forEach(c => {
+                const regDate = new Date(c.created_at).toLocaleDateString('es-ES', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td style="color: var(--secondary); font-weight: bold; padding: 12px 8px;">#${c.id}</td>
+                    <td style="font-weight: 600; padding: 12px 8px; color: var(--text-light);">${c.full_name}</td>
+                    <td style="color: var(--text-muted); padding: 12px 8px;"><a href="mailto:${c.email}" style="color: var(--text-muted); text-decoration: none;">✉️ ${c.email}</a></td>
+                    <td style="padding: 12px 8px;">📅 ${regDate}</td>
+                    <td style="padding: 12px 8px; text-align: center;">
+                        <button class="btn-primary" style="width: auto; padding: 6px 12px; font-size: 12px; background: rgba(99,102,241,0.15); color: var(--primary); border: 1px solid rgba(99,102,241,0.3); border-radius: 8px; cursor: pointer; font-weight: 600;" onclick="viewCustomerDetail(${c.id})">
+                            👁️ Ver Historial
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function viewCustomerDetail(customerId) {
+            const customer = customersData.find(c => c.id === customerId);
+            if (!customer) return;
+
+            document.getElementById("customers-list-view").style.display = "none";
+            document.getElementById("customer-detail-view").style.display = "block";
+
+            document.getElementById("detail-customer-header-name").innerText = customer.full_name;
+            document.getElementById("detail-customer-name").innerText = customer.full_name;
+            document.getElementById("detail-customer-id-badge").innerText = `ID: #${customer.id}`;
+            document.getElementById("detail-customer-email").innerText = customer.email;
+            
+            const regDate = new Date(customer.created_at).toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+            document.getElementById("detail-customer-reg-date").innerText = regDate;
+            document.getElementById("detail-customer-total-orders").innerText = customer.total_orders;
+
+            const container = document.getElementById("detail-orders-list");
+            container.innerHTML = "";
+
+            if (customer.orders.length === 0) {
+                container.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 20px;">Este cliente aún no ha realizado compras.</p>`;
+                return;
+            }
+
+            customer.orders.forEach(order => {
+                const orderDate = new Date(order.created_at).toLocaleDateString('es-ES', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                // Status styling
+                let statusBadge = "";
+                if (order.status === "PAID") {
+                    statusBadge = `<span class="role-badge" style="background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.4); color: var(--secondary); font-weight: bold; font-size: 10px; padding: 2px 8px; border-radius: 6px; border: 1px solid;">🟢 PAGADA</span>`;
+                } else if (order.status === "PENDING") {
+                    statusBadge = `<span class="role-badge" style="background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.4); color: var(--warning); font-weight: bold; font-size: 10px; padding: 2px 8px; border-radius: 6px; border: 1px solid;">🟡 PENDIENTE</span>`;
+                } else {
+                    statusBadge = `<span class="role-badge" style="background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.4); color: var(--danger); font-weight: bold; font-size: 10px; padding: 2px 8px; border-radius: 6px; border: 1px solid;">❌ CANCELADA</span>`;
+                }
+
+                // Check ticket validations
+                let validationHTML = "";
+                const validatedCount = order.tickets.filter(t => t.is_validated).length;
+                if (order.status === "PAID") {
+                    if (validatedCount === order.tickets.length) {
+                        validationHTML = `<span style="color: var(--secondary); font-size: 11px; font-weight: bold;">✔️ QR Validado (Ingresado)</span>`;
+                    } else if (validatedCount > 0) {
+                        validationHTML = `<span style="color: var(--warning); font-size: 11px; font-weight: bold;">⚠️ Parcial (${validatedCount}/${order.tickets.length} Ingresados)</span>`;
+                    } else {
+                        validationHTML = `<span style="color: var(--text-muted); font-size: 11px;">⌛ A la espera en cola</span>`;
+                    }
+                }
+
+                const card = document.createElement("div");
+                card.className = "glass-card";
+                card.style.background = "rgba(30,41,59,0.3)";
+                card.style.border = "1px solid rgba(255,255,255,0.05)";
+                card.style.marginBottom = "12px";
+                card.style.padding = "16px";
+                card.style.display = "flex";
+                card.style.justifyContent = "space-between";
+                card.style.alignItems = "center";
+
+                card.innerHTML = `
+                    <div style="text-align: left;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                            ${statusBadge}
+                            <span style="font-weight: 700; font-family: 'Outfit'; font-size: 14px; color: var(--text-light);">${order.event_title}</span>
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">📍 ${order.event_location} | 📅 ${orderDate}</div>
+                        <div style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Asientos: <span style="color: var(--secondary); font-weight: 700;">${order.seats}</span></div>
+                    </div>
+                    <div style="text-align: right; display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: 15px; font-weight: bold; color: var(--text-light); font-family: 'Outfit';">$${order.total_price.toFixed(2)}</span>
+                        ${validationHTML}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
         }
 
     </script>
