@@ -1,0 +1,106 @@
+<mxfile host="Electron" modified="2026-07-09T23:59:59.000Z" agent="Mozilla/5.0" version="21.6.8" type="device">
+  <diagram id="diagram-1" name="Arquitectura de Referencia">
+    <mxGraphModel dx="1290" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Layer 1: Usuarios -->
+        <mxCell id="layer1" value="Capa 1: Usuarios (Roles)" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=1;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#1E293B;strokeColor=#3B82F6;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="800" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="u1" value="Aficionado / Cliente&#xa;(Comprador)" style="shape=actor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#0F172A;strokeColor=#10B981;fontColor=#FFFFFF;" vertex="1" parent="layer1">
+          <mxGeometry x="100" y="40" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="u2" value="Organizador del Evento&#xa;(Admin)" style="shape=actor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#0F172A;strokeColor=#10B981;fontColor=#FFFFFF;" vertex="1" parent="layer1">
+          <mxGeometry x="380" y="40" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="u3" value="Personal de Acceso&#xa;(Staff)" style="shape=actor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#0F172A;strokeColor=#10B981;fontColor=#FFFFFF;" vertex="1" parent="layer1">
+          <mxGeometry x="660" y="40" width="30" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Layer 2: Procesos -->
+        <mxCell id="layer2" value="Capa 2: Procesos / Actividades" style="swimlane;fillColor=#0F172A;strokeColor=#10B981;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="180" width="800" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="p1" value="Explorar Eventos y Reservar Asientos" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#818CF8;fontColor=#FFFFFF;" vertex="1" parent="layer2">
+          <mxGeometry x="40" y="40" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p2" value="Gestionar Eventos y Ver Historiales" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#818CF8;fontColor=#FFFFFF;" vertex="1" parent="layer2">
+          <mxGeometry x="300" y="40" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p3" value="Validar Entradas con Escáner de Cámara" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#818CF8;fontColor=#FFFFFF;" vertex="1" parent="layer2">
+          <mxGeometry x="560" y="40" width="200" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Layer 3: Interfaces -->
+        <mxCell id="layer3" value="Capa 3: Aplicaciones / Interfaces (Frontend)" style="swimlane;fillColor=#1E1B4B;strokeColor=#818CF8;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="300" width="800" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="i1" value="Portal de Ventas Premium (Glassmorphism)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#F59E0B;fontColor=#FFFFFF;" vertex="1" parent="layer3">
+          <mxGeometry x="40" y="40" width="160" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="i2" value="Panel de Historial de Eventos" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#F59E0B;fontColor=#FFFFFF;" vertex="1" parent="layer3">
+          <mxGeometry x="220" y="40" width="160" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="i3" value="Historial de Clientes &amp; Compras" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#F59E0B;fontColor=#FFFFFF;" vertex="1" parent="layer3">
+          <mxGeometry x="400" y="40" width="180" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="i4" value="Web Escáner QR de Cámara Móvil" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#F59E0B;fontColor=#FFFFFF;" vertex="1" parent="layer3">
+          <mxGeometry x="600" y="40" width="160" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- Layer 4: Integracion -->
+        <mxCell id="layer4" value="Capa 4: Integración &amp; Gateway" style="swimlane;fillColor=#1E293B;strokeColor=#F59E0B;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="420" width="800" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="g1" value="API Gateway (FastAPI Core Router / REST)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0F172A;strokeColor=#10B981;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="layer4">
+          <mxGeometry x="40" y="40" width="280" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="g2" value="Cola de Mensajería Asíncrona (Celery)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0F172A;strokeColor=#10B981;fontColor=#FFFFFF;" vertex="1" parent="layer4">
+          <mxGeometry x="360" y="40" width="220" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="g3" value="Lock Distribuido de Asiento (Redis SETNX)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0F172A;strokeColor=#10B981;fontColor=#FFFFFF;" vertex="1" parent="layer4">
+          <mxGeometry x="600" y="40" width="160" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Layer 5: Datos -->
+        <mxCell id="layer5" value="Capa 5: Datos / Almacenamiento (Docker)" style="swimlane;fillColor=#0F172A;strokeColor=#10B981;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="860" y="40" width="200" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="d1" value="🐘 PostgreSQL 15&#xa;(Relacional)&#xa;Docker Container" style="shape=datastore;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#3B82F6;fontColor=#FFFFFF;" vertex="1" parent="layer5">
+          <mxGeometry x="30" y="40" width="140" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="d2" value="🔴 Redis 7&#xa;(Cache &amp; Broker)&#xa;Docker Container" style="shape=datastore;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#3B82F6;fontColor=#FFFFFF;" vertex="1" parent="layer5">
+          <mxGeometry x="30" y="140" width="140" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Layer 6: Seguridad -->
+        <mxCell id="layer6" value="Capa 6: Seguridad &amp; Acceso" style="swimlane;fillColor=#1E1B4B;strokeColor=#EF4444;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="860" y="300" width="200" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="s1" value="🔑 OAuth2 / JWT&#xa;(Bearer Token)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#EF4444;fontColor=#FFFFFF;" vertex="1" parent="layer6">
+          <mxGeometry x="20" y="40" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="s2" value="🔒 Autorización de Roles&#xa;(admin, client, staff)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#EF4444;fontColor=#FFFFFF;" vertex="1" parent="layer6">
+          <mxGeometry x="20" y="120" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Layer 7: Infraestructura -->
+        <mxCell id="layer7" value="Capa 7: Infraestructura y Servidores" style="swimlane;fillColor=#1E293B;strokeColor=#818CF8;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="540" width="1020" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="inf1" value="🌐 Uvicorn ASGI Web Server&#xa;(Python 3.10 Runtime Container)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#0F172A;strokeColor=#3B82F6;fontColor=#FFFFFF;fontStyle=1;" vertex="1" parent="layer7">
+          <mxGeometry x="40" y="40" width="280" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="inf2" value="📨 Celery Background Worker Container" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#0F172A;strokeColor=#3B82F6;fontColor=#FFFFFF;" vertex="1" parent="layer7">
+          <mxGeometry x="360" y="40" width="280" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="inf3" value="⚡ AWS Lambda Runtime Simulado&#xa;(PaymentProcessor / QR Generator)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#0F172A;strokeColor=#3B82F6;fontColor=#FFFFFF;" vertex="1" parent="layer7">
+          <mxGeometry x="680" y="40" width="300" height="60" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
