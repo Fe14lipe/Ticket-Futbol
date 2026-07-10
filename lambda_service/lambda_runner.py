@@ -9,7 +9,13 @@ async def invoke_payment(payload: Request):
     """
     Simulates calling payment Lambda.
     """
-    event = await payload.json()
+    try:
+        event = await payload.json()
+        if not isinstance(event, dict):
+            event = {}
+    except Exception:
+        event = {}
+        
     result = payment_handler(event, None)
     
     if result["statusCode"] != 200:
@@ -22,7 +28,13 @@ async def invoke_generator(payload: Request):
     """
     Simulates calling ticket generator Lambda.
     """
-    event = await payload.json()
+    try:
+        event = await payload.json()
+        if not isinstance(event, dict):
+            event = {}
+    except Exception:
+        event = {}
+        
     result = generator_handler(event, None)
     
     if result["statusCode"] != 200:
