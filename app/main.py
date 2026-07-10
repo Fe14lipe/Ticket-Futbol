@@ -30,12 +30,12 @@ try:
     db = SessionLocal()
     try:
         # 1. Seed default admin user if not exists
-        admin_exists = db.query(User).filter(User.email == "admin").first()
+        admin_exists = db.query(User).filter(User.email == settings.DEFAULT_ADMIN_EMAIL).first()
         if not admin_exists:
             logger.info("Seeding default admin user...")
-            hashed_pwd = get_password_hash("admin123")
+            hashed_pwd = get_password_hash(settings.DEFAULT_ADMIN_PASSWORD)
             default_admin = User(
-                email="admin",
+                email=settings.DEFAULT_ADMIN_EMAIL,
                 hashed_password=hashed_pwd,
                 full_name="Organizador Admin",
                 role="admin",
