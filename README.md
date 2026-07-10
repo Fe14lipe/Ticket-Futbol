@@ -45,13 +45,6 @@ Tener instalados **Docker** y **Docker Compose** en tu sistema.
 
 ---
 
-## 🔑 Credenciales de Acceso Administrador
-
-* **Usuario**: `admin`
-* **Contraseña**: `admin123`
-* **Rol**: Organizador (`admin`)
-
----
 
 ## 🧪 Pruebas Unitarias Locales (Opcional)
 

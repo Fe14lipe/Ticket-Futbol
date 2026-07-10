@@ -26,3 +26,8 @@ static/qrcodes/*.png
 .gemini/
 .DS_Store
 Thumbs.db
+
+# Architecture documentation and diagrams
+architecture_documentation.md
+arquitectura_referencia.drawio
+.$arquitectura_referencia.drawio.bkp
