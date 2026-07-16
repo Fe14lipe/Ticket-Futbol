@@ -1,38 +1,51 @@
+import os
 import logging
-import httpx
-from app.core.config import settings
+import qrcode
 
 logger = logging.getLogger(__name__)
 
 class TicketGeneratorService:
-    def __init__(self):
-        self.lambda_url = f"{settings.LAMBDA_SERVICE_URL}/generate_ticket"
-
-    def generate_qr_code_lambda(self, ticket_uuid: str, ticket_url: str) -> str:
+    def generate_qr_code(self, ticket_uuid: str, ticket_url: str) -> str:
         """
-        Invokes the simulated QR Ticket Generator Lambda function.
-        Synchronous HTTP client because it is called inside Celery tasks (which run in worker threads).
+        Generates the ticket QR Code directly inside the Queue Worker process
+        using the python qrcode library.
         """
-        payload = {
-            "ticket_uuid": ticket_uuid,
-            "ticket_url": ticket_url
-        }
-
-        try:
-            logger.info(f"Invoking ticket generator Lambda for ticket {ticket_uuid} with URL {ticket_url}")
-            response = httpx.post(self.lambda_url, json=payload, timeout=15.0)
+        logger.info(f"Generating QR Code locally for ticket {ticket_uuid} with URL {ticket_url}")
+        
+        # Check target directories to write to
+        base_dirs = ["/app/static/qrcodes", "./static/qrcodes", "../static/qrcodes"]
+        target_dir = None
+        for d in base_dirs:
+            try:
+                os.makedirs(d, exist_ok=True)
+                target_dir = d
+                break
+            except Exception:
+                continue
+                
+        if not target_dir:
+            target_dir = "./qrcodes"
+            os.makedirs(target_dir, exist_ok=True)
             
-            if response.status_code == 200:
-                data = response.json()
-                logger.info(f"Ticket generator Lambda response: {data}")
-                return data.get("qr_code_url")
-            else:
-                logger.error(f"Ticket generator Lambda returned status {response.status_code}: {response.text}")
-                return f"/static/qrcodes/{ticket_uuid}.png" # Fallback guess path
-        except httpx.RequestError as e:
-            logger.error(f"Failed to connect to Ticket Generator Lambda: {e}")
-            # Mock fallback: return local route since it will be generated anyway
-            logger.warning("Simulating local fallback path for development environment")
+        file_path = os.path.join(target_dir, f"{ticket_uuid}.png")
+        
+        try:
+            qr = qrcode.QRCode(
+                version=1,
+                error_correction=qrcode.constants.ERROR_CORRECT_H,
+                box_size=10,
+                border=4,
+            )
+            qr.add_data(ticket_url)
+            qr.make(fit=True)
+            
+            img = qr.make_image(fill_color="#1E293B", back_color="#FFFFFF")
+            img.save(file_path)
+            
+            logger.info(f"QR Code successfully generated and saved to {file_path}")
+            return f"/static/qrcodes/{ticket_uuid}.png"
+        except Exception as e:
+            logger.error(f"Error generating QR code for ticket {ticket_uuid}: {e}")
             return f"/static/qrcodes/{ticket_uuid}.png"
 
 ticket_generator_service = TicketGeneratorService()

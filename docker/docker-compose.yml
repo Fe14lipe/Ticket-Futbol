@@ -31,18 +31,32 @@ services:
       timeout: 5s
       retries: 5
 
-  # Serverless functions app layer: Simulated AWS Lambdas (Payment & QR Generator)
-  lambda-runner:
+  # Message broker layer: RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: ticket_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Payment Microservice layer (FastAPI payment processor)
+  payment-service:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.lambda
-    container_name: ticket_lambda_runner
+      dockerfile: docker/Dockerfile.payment
+    container_name: ticket_payment_service
     ports:
       - "8001:8001"
     volumes:
       - ../static:/app/static
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
 
   # Core Backend API & Gateway application layer (FastAPI)
   api:
@@ -58,9 +72,9 @@ services:
       - POSTGRES_HOST=db
       - POSTGRES_DB=ticket_futbol_db
       - REDIS_HOST=redis
-      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=pyamqp://guest:guest@rabbitmq:5672//
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - LAMBDA_SERVICE_URL=http://lambda-runner:8001
+      - PAYMENT_SERVICE_URL=http://payment-service:8001
     volumes:
       - ../static:/app/static
     depends_on:
@@ -68,7 +82,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      lambda-runner:
+      rabbitmq:
+        condition: service_healthy
+      payment-service:
         condition: service_started
 
   # Queue processing application layer: Celery Worker
@@ -83,9 +99,9 @@ services:
       - POSTGRES_HOST=db
       - POSTGRES_DB=ticket_futbol_db
       - REDIS_HOST=redis
-      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=pyamqp://guest:guest@rabbitmq:5672//
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - LAMBDA_SERVICE_URL=http://lambda-runner:8001
+      - PAYMENT_SERVICE_URL=http://payment-service:8001
     volumes:
       - ../static:/app/static
     depends_on:
@@ -93,7 +109,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      lambda-runner:
+      rabbitmq:
+        condition: service_healthy
+      payment-service:
         condition: service_started
 
 volumes:

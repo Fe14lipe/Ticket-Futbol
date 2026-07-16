@@ -177,4 +177,34 @@ class TicketService:
                 "order_id": order.id
             }
 
+    def cleanup_expired_locks(self, db: Session):
+        """
+        Cleans up expired seat locks in the database.
+        """
+        from datetime import datetime, timedelta
+        
+        # Query seats currently LOCKED
+        locked_seats = db.query(Seat).filter(Seat.status == "LOCKED").all()
+        if not locked_seats:
+            return
+            
+        db_changed = False
+        for seat in locked_seats:
+            redis_locked = seat_lock_service.is_locked(seat.id)
+            db_expired = False
+            if seat.locked_until:
+                # 5 minutes TTL fallback
+                db_expired = datetime.utcnow() > seat.locked_until + timedelta(minutes=5)
+                
+            # If it's not locked in Redis and (Redis is active OR the DB fallback time has expired)
+            if not redis_locked:
+                if seat_lock_service.client is not None or db_expired:
+                    seat.status = "AVAILABLE"
+                    seat.locked_until = None
+                    db_changed = True
+                    logger.info(f"Released expired DB lock for seat {seat.id} ({seat.seat_number})")
+                    
+        if db_changed:
+            db.commit()
+
 ticket_service = TicketService()

@@ -45,8 +45,8 @@ def generate_ticket_task(ticket_id: int):
         # Locally, we use a relative path /t/{uuid} or absolute URL
         ticket_url = f"/t/{ticket.ticket_uuid}"
         
-        # Invoke Lambda Generator
-        qr_url = ticket_generator_service.generate_qr_code_lambda(ticket.ticket_uuid, ticket_url)
+        # Generate QR Code locally in the worker
+        qr_url = ticket_generator_service.generate_qr_code(ticket.ticket_uuid, ticket_url)
         
         # Save to database
         ticket.qr_code_url = qr_url

@@ -34,6 +34,9 @@ def get_event_seats(event_id: int, db: Session = Depends(get_db)):
     """
     Retrieves seat details and real-time locking statuses for a match.
     """
+    from app.services.ticket_service import ticket_service
+    ticket_service.cleanup_expired_locks(db)
+
     event = db.query(Event).filter(Event.id == event_id).first()
     if not event:
         raise HTTPException(

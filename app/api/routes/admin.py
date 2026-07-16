@@ -118,6 +118,9 @@ def get_admin_dashboard(
     """
     Admin-only route. Provides overall platform transactional and inventory health metrics.
     """
+    from app.services.ticket_service import ticket_service
+    ticket_service.cleanup_expired_locks(db)
+
     total_events = db.query(Event).count()
     total_tickets = db.query(Ticket).count()
     validated_tickets = db.query(Ticket).filter(Ticket.is_validated == True).count()

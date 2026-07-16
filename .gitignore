@@ -28,6 +28,5 @@ static/qrcodes/*.png
 Thumbs.db
 
 # Architecture documentation and diagrams
-architecture_documentation.md
-arquitectura_referencia.drawio
+# (Tracked in git)
 .$arquitectura_referencia.drawio.bkp

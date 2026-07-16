@@ -20,16 +20,16 @@ class Settings(BaseSettings):
     REDIS_PORT: int = int(os.getenv("REDIS_PORT", "6379"))
     
     # Celery configurations
-    CELERY_BROKER_URL: str = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
+    CELERY_BROKER_URL: str = os.getenv("CELERY_BROKER_URL", "pyamqp://guest:guest@localhost:5672//")
     CELERY_RESULT_BACKEND: str = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
+    
+    # Payment Microservice configurations
+    PAYMENT_SERVICE_URL: str = os.getenv("PAYMENT_SERVICE_URL", "http://localhost:8001")
     
     # JWT Auth configurations
     SECRET_KEY: str = os.getenv("SECRET_KEY", "7c8d9aef10515159048a8f1b620b72a6e9a6234c85671ef084db1587d65cd0fa")
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "120"))
-    
-    # Lambda Simulator configurations
-    LAMBDA_SERVICE_URL: str = os.getenv("LAMBDA_SERVICE_URL", "http://localhost:8001")
     
     @property
     def DATABASE_URL(self) -> str:
