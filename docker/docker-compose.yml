@@ -38,6 +38,8 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    environment:
+      - "RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit loopback_users []"
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
       interval: 5s
