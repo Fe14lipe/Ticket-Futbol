@@ -1,7 +1,7 @@
 import logging
 import httpx
 from app.core.config import settings
-from lambda_service.payment_processor_handler import lambda_handler as payment_handler
+from payment_service.payment_processor_handler import lambda_handler as payment_handler
 
 logger = logging.getLogger(__name__)
 

@@ -15,4 +15,4 @@ COPY . .
 EXPOSE 8001
 
 # Start the Payment Microservice runner
-CMD ["uvicorn", "lambda_service.payment_service_runner:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["uvicorn", "payment_service.payment_service_runner:app", "--host", "0.0.0.0", "--port", "8001"]

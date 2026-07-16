@@ -4,7 +4,7 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from pydantic import BaseModel
 import time
 from datetime import datetime
-from lambda_service.payment_processor_handler import lambda_handler as payment_handler
+from payment_service.payment_processor_handler import lambda_handler as payment_handler
 
 # Set docs_url=None to override with our custom Swagger UI endpoint
 app = FastAPI(title="Microservicio de Pagos (Simulado)", version="1.0", docs_url=None)
